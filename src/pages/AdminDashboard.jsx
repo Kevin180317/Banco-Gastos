@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../components/useAuth";
 import useLogout from "../components/useLogout";
-
+import RendicionesTab from "../components/RendicionesTab";
 const LOGO_URL = "/logo.png";
 
 const AdminDashboard = () => {
@@ -14,6 +14,9 @@ const AdminDashboard = () => {
   // PAGINACIÓN
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // BUSCADOR
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [formData, setFormData] = useState({
@@ -54,6 +57,21 @@ const AdminDashboard = () => {
     fetchClientes();
   }, []);
 
+  // Filtrar clientes basado en el término de búsqueda
+  const filteredClientes = clientes.filter((cliente) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      cliente.nombre.toLowerCase().includes(searchLower) ||
+      cliente.rut.toLowerCase().includes(searchLower) ||
+      cliente.correo.toLowerCase().includes(searchLower) ||
+      (cliente.telefono &&
+        cliente.telefono.toLowerCase().includes(searchLower)) ||
+      (cliente.direccion &&
+        cliente.direccion.toLowerCase().includes(searchLower)) ||
+      (cliente.giro && cliente.giro.toLowerCase().includes(searchLower))
+    );
+  });
+
   // Manejar selección de cliente para editar
   const handleSelectCliente = (cliente) => {
     setSelectedCliente(cliente);
@@ -91,6 +109,18 @@ const AdminDashboard = () => {
         [name]: value,
       }));
     }
+  };
+
+  // Manejar cambio en el buscador
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Resetear a la primera página al buscar
+  };
+
+  // Limpiar búsqueda
+  const clearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
   };
 
   // Guardar o actualizar cliente
@@ -149,9 +179,9 @@ const AdminDashboard = () => {
     { key: "contacto", label: "Contacto" },
   ];
 
-  // Calcular clientes a mostrar en la página actual
-  const totalPages = Math.ceil(clientes.length / itemsPerPage);
-  const paginatedClientes = clientes.slice(
+  // Calcular clientes a mostrar en la página actual (usando clientes filtrados)
+  const totalPages = Math.ceil(filteredClientes.length / itemsPerPage);
+  const paginatedClientes = filteredClientes.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -209,10 +239,42 @@ const AdminDashboard = () => {
       {tab === "clientes" && (
         <div>
           <h2 className="text-xl font-bold mb-4">Lista de Clientes</h2>
+
+          {/* Buscador */}
+          <div className="mb-4 flex gap-2 items-center">
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Buscar por nombre, RUT, correo, teléfono, dirección o giro..."
+                className="w-full border px-3 py-2 rounded-lg pr-10"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  title="Limpiar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <span className="text-sm text-gray-600">
+                {filteredClientes.length} de {clientes.length} clientes
+              </span>
+            )}
+          </div>
+
           {loadingClientes ? (
             <p>Cargando clientes...</p>
-          ) : clientes.length === 0 ? (
-            <p>No hay clientes registrados.</p>
+          ) : filteredClientes.length === 0 ? (
+            <p>
+              {searchTerm
+                ? `No se encontraron clientes que coincidan con "${searchTerm}".`
+                : "No hay clientes registrados."}
+            </p>
           ) : (
             <>
               {/* Notificación de copiado */}
@@ -283,37 +345,39 @@ Dinero: $${c.dinero}`;
                 </table>
               </div>
               {/* Paginación */}
-              <div className="flex justify-center items-center gap-2 mt-4">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-                >
-                  {"<"}
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-4">
                   <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`px-3 py-1 rounded ${
-                      currentPage === i + 1
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200"
-                    }`}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
                   >
-                    {i + 1}
+                    {"<"}
                   </button>
-                ))}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-                >
-                  {">"}
-                </button>
-              </div>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`px-3 py-1 rounded ${
+                        currentPage === i + 1
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                  >
+                    {">"}
+                  </button>
+                </div>
+              )}
             </>
           )}
           <button
@@ -438,12 +502,7 @@ Dinero: $${c.dinero}`;
         </div>
       )}
 
-      {tab === "rendiciones" && (
-        <div className="text-center text-gray-500 py-10">
-          <h2 className="text-xl font-bold mb-2">Rendiciones</h2>
-          <p>Próximamente módulo de rendiciones.</p>
-        </div>
-      )}
+      {tab === "rendiciones" && <RendicionesTab clientes={clientes} />}
 
       {tab === "contacto" && (
         <div className="flex flex-col items-center gap-4">

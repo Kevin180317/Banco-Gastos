@@ -10,7 +10,7 @@ const PORT = 5000;
 app.use(
   cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT"], // Agrega "PUT" aquí
+    methods: ["GET", "POST", "PUT", "DELETE"], // Agrega "PUT" aquí
     credentials: true,
   })
 );
@@ -230,11 +230,124 @@ app.post("/refresh-token", (req, res) => {
   });
 });
 
+app.post("/rendiciones", (req, res) => {
+  const { clienteId, rendicion, totalAbonos, totalGastos, saldo } = req.body;
+
+  if (!clienteId || !rendicion) {
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
+  const sql =
+    "INSERT INTO rendiciones (cliente_id, ingresos, gastos, total_abonos, total_gastos, saldo) VALUES (?, ?, ?, ?, ?, ?)";
+
+  connnection.query(
+    sql,
+    [
+      clienteId,
+      JSON.stringify(rendicion.ingresos),
+      JSON.stringify(rendicion.gastos),
+      totalAbonos,
+      totalGastos,
+      saldo,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Error al guardar la rendición:", err);
+        return res.status(500).json({ error: "Error al guardar la rendición" });
+      }
+      res.status(201).json({
+        message: "Rendición guardada correctamente",
+        id: result.insertId,
+      });
+    }
+  );
+});
+
+// Nueva ruta para consultar el historial de rendiciones
+app.get("/rendiciones", (req, res) => {
+  const sql =
+    "SELECT id, cliente_id as clienteId, ingresos, gastos, total_abonos as totalAbonos, total_gastos as totalGastos, saldo, fecha_creacion as createdAt FROM rendiciones ORDER BY id DESC";
+  connnection.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener las rendiciones:", err);
+      return res
+        .status(500)
+        .json({ error: "Error al obtener las rendiciones" });
+    }
+    // Parsear ingresos y gastos de JSON
+    const parsed = results.map((r) => ({
+      ...r,
+      ingresos: JSON.parse(r.ingresos),
+      gastos: JSON.parse(r.gastos),
+    }));
+    res.json(parsed);
+  });
+});
+
+// Ruta para eliminar una rendición por su ID
+app.delete("/rendiciones/:id", (req, res) => {
+  const { id } = req.params;
+  connnection.query(
+    "DELETE FROM rendiciones WHERE id = ?",
+    [id],
+    (err, result) => {
+      if (err) {
+        console.error("Error al eliminar la rendición:", err);
+        return res
+          .status(500)
+          .json({ error: "Error al eliminar la rendición" });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Rendición no encontrada" });
+      }
+      res.json({ message: "Rendición eliminada correctamente" });
+    }
+  );
+});
+
 // Ruta de logout
 app.post("/logout", (req, res) => {
   res.clearCookie("token"); // Eliminar la cookie del token
   res.clearCookie("refresh_token"); // Eliminar la cookie del refresh token
   res.json({ message: "Has cerrado sesión con éxito" });
+});
+
+// Ruta para actualizar una rendición por su ID
+app.put("/rendiciones/:id", (req, res) => {
+  const { id } = req.params;
+  const { clienteId, rendicion, totalAbonos, totalGastos, saldo } = req.body;
+
+  if (!clienteId || !rendicion) {
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
+  const sql =
+    "UPDATE rendiciones SET cliente_id = ?, ingresos = ?, gastos = ?, total_abonos = ?, total_gastos = ?, saldo = ? WHERE id = ?";
+
+  connnection.query(
+    sql,
+    [
+      clienteId,
+      JSON.stringify(rendicion.ingresos),
+      JSON.stringify(rendicion.gastos),
+      totalAbonos,
+      totalGastos,
+      saldo,
+      id,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Error al actualizar la rendición:", err);
+        return res
+          .status(500)
+          .json({ error: "Error al actualizar la rendición" });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Rendición no encontrada" });
+      }
+      res.json({ message: "Rendición actualizada correctamente" });
+    }
+  );
 });
 
 // Iniciar el servidor
