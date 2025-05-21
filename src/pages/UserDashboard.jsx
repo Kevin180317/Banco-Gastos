@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../components/useAuth";
 import useLogout from "../components/useLogout";
+import RendicionesTab from "../components/RendicionesTab";
 
 const LOGO_URL = "/logo.png";
 
@@ -113,7 +114,6 @@ const UserDashboard = () => {
                       <th className="px-3 py-2 border">Dirección</th>
                       <th className="px-3 py-2 border">Giro</th>
                       <th className="px-3 py-2 border">Dinero</th>
-                      <th className="px-3 py-2 border">Acciones</th>
                       <th className="px-3 py-2 border">Copiar</th>
                     </tr>
                   </thead>
@@ -131,7 +131,6 @@ const UserDashboard = () => {
                             ${c.dinero}
                           </span>
                         </td>
-                        <td className="px-3 py-2 "></td>
                         <td className="px-3 py-2 border">
                           <button
                             className="text-gray-600 underline"
@@ -195,7 +194,7 @@ Dinero: $${c.dinero}`;
       {tab === "rendiciones" && (
         <div>
           <h2 className="text-xl font-bold mb-4">Mis Rendiciones</h2>
-          <p>No tienes rendiciones registradas.</p>
+          <RendicionesTab clientes={clientes} readOnly={true} />
         </div>
       )}
       {tab === "contacto" && (

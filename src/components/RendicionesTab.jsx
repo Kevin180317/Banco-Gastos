@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
-const RendicionesTab = ({ clientes }) => {
+const RendicionesTab = ({ clientes, readOnly = false }) => {
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [rendicion, setRendicion] = useState({
     ingresos: [{ tipo: "", detalle: "", monto: "", fecha: "" }],
@@ -10,7 +10,7 @@ const RendicionesTab = ({ clientes }) => {
   const [totalAbonos, setTotalAbonos] = useState(0);
   const [totalGastos, setTotalGastos] = useState(0);
   const [saldo, setSaldo] = useState(0);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(!readOnly);
   const [historial, setHistorial] = useState([]);
   const [showHistorial, setShowHistorial] = useState(false);
   const [selectedRendicion, setSelectedRendicion] = useState(null);
@@ -43,6 +43,11 @@ const RendicionesTab = ({ clientes }) => {
         .catch(() => setHistorial([]));
     }
   }, [showHistorial]);
+
+  // Si cambia readOnly, actualiza isEditing
+  useEffect(() => {
+    setIsEditing(!readOnly);
+  }, [readOnly]);
 
   // Handle changes to ingreso items
   const handleIngresoChange = (index, field, value) => {
@@ -361,19 +366,21 @@ const RendicionesTab = ({ clientes }) => {
       <div className="flex justify-between items-center no-print">
         <h2 className="text-xl font-bold">Rendición de Gastos</h2>
         <div className="space-x-2">
-          <button
-            onClick={handleNew}
-            className="bg-green-500 text-white px-3 py-1 rounded"
-          >
-            Nueva
-          </button>
+          {!readOnly && (
+            <button
+              onClick={handleNew}
+              className="bg-green-500 text-white px-3 py-1 rounded"
+            >
+              Nueva
+            </button>
+          )}
           <button
             onClick={() => setShowHistorial((v) => !v)}
             className="bg-gray-500 text-white px-3 py-1 rounded"
           >
             {showHistorial ? "Ocultar Historial" : "Ver Historial"}
           </button>
-          {isEditing ? (
+          {!readOnly && isEditing ? (
             <button
               onClick={handleSave}
               className="bg-blue-500 text-white px-3 py-1 rounded"
@@ -381,13 +388,31 @@ const RendicionesTab = ({ clientes }) => {
               Guardar
             </button>
           ) : (
+            !readOnly && (
+              <>
+                <button
+                  onClick={handleEdit}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="bg-purple-500 text-white px-3 py-1 rounded"
+                >
+                  Imprimir
+                </button>
+                <button
+                  onClick={handleGenerateExcel}
+                  className="bg-green-600 text-white px-3 py-1 rounded"
+                >
+                  Excel
+                </button>
+              </>
+            )
+          )}
+          {readOnly && (
             <>
-              <button
-                onClick={handleEdit}
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-              >
-                Editar
-              </button>
               <button
                 onClick={handlePrint}
                 className="bg-purple-500 text-white px-3 py-1 rounded"
@@ -455,12 +480,14 @@ const RendicionesTab = ({ clientes }) => {
                           >
                             Ver
                           </button>
-                          <button
-                            className="text-red-600 underline"
-                            onClick={() => handleEliminarRendicion(rend.id)}
-                          >
-                            Eliminar
-                          </button>
+                          {!readOnly && (
+                            <button
+                              className="text-red-600 underline"
+                              onClick={() => handleEliminarRendicion(rend.id)}
+                            >
+                              Eliminar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -473,7 +500,7 @@ const RendicionesTab = ({ clientes }) => {
       )}
 
       {/* Selección de cliente - NO se imprime */}
-      {isEditing && (
+      {!readOnly && isEditing && (
         <div className="mb-4 no-print">
           <label className="block mb-2 font-medium">Seleccionar Cliente:</label>
           <select
@@ -529,7 +556,7 @@ const RendicionesTab = ({ clientes }) => {
           </div>
         )}
 
-        {/* Tablas de rendición - SÍ se imprimen */}
+        {/* Tablas de rendición */}
         <div className="overflow-x-auto">
           {/* Tabla de ingresos */}
           <table className="min-w-full mb-4 border">
@@ -539,7 +566,7 @@ const RendicionesTab = ({ clientes }) => {
                 <th className="border px-4 py-2 text-center w-1/2">DETALLE</th>
                 <th className="border px-4 py-2 text-center w-1/8">FECHA</th>
                 <th className="border px-4 py-2 text-center w-1/8">MONTO</th>
-                {isEditing && (
+                {isEditing && !readOnly && (
                   <th className="border px-4 py-2 w-1/12 no-print">ACCIÓN</th>
                 )}
               </tr>
@@ -548,7 +575,7 @@ const RendicionesTab = ({ clientes }) => {
               {ingresos.map((ingreso, index) => (
                 <tr key={index}>
                   <td className="border px-4 py-2">
-                    {isEditing ? (
+                    {isEditing && !readOnly ? (
                       <input
                         type="text"
                         className="w-full p-1 border rounded no-print"
@@ -606,7 +633,7 @@ const RendicionesTab = ({ clientes }) => {
                       `$${ingreso.monto || 0}`
                     )}
                   </td>
-                  {isEditing && (
+                  {isEditing && !readOnly && (
                     <td className="border px-4 py-2 text-center no-print">
                       <button
                         onClick={() => removeIngreso(index)}
@@ -635,7 +662,7 @@ const RendicionesTab = ({ clientes }) => {
           </table>
 
           {/* Botón agregar ingreso - NO se imprime */}
-          {isEditing && (
+          {isEditing && !readOnly && (
             <button
               onClick={addIngreso}
               className="bg-green-500 text-white px-3 py-1 rounded mb-4 no-print"
@@ -653,7 +680,7 @@ const RendicionesTab = ({ clientes }) => {
                 <th className="border px-4 py-2 text-center w-1/8">FECHA</th>
                 <th className="border px-4 py-2 text-center w-1/8">BOLETA</th>
                 <th className="border px-4 py-2 text-center w-1/8">MONTO</th>
-                {isEditing && (
+                {isEditing && !readOnly && (
                   <th className="border px-4 py-2 w-1/12 no-print">ACCIÓN</th>
                 )}
               </tr>
@@ -662,7 +689,7 @@ const RendicionesTab = ({ clientes }) => {
               {gastos.map((gasto, index) => (
                 <tr key={index}>
                   <td className="border px-4 py-2">
-                    {isEditing ? (
+                    {isEditing && !readOnly ? (
                       <input
                         type="text"
                         className="w-full p-1 border rounded no-print"
@@ -734,7 +761,7 @@ const RendicionesTab = ({ clientes }) => {
                       `$${gasto.monto || 0}`
                     )}
                   </td>
-                  {isEditing && (
+                  {isEditing && !readOnly && (
                     <td className="border px-4 py-2 text-center no-print">
                       <button
                         onClick={() => removeGasto(index)}
@@ -770,7 +797,7 @@ const RendicionesTab = ({ clientes }) => {
           </table>
 
           {/* Botón agregar gasto - NO se imprime */}
-          {isEditing && (
+          {isEditing && !readOnly && (
             <button
               onClick={addGasto}
               className="bg-green-500 text-white px-3 py-1 rounded mb-4 no-print"
