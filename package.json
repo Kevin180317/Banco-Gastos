@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.3.0",
     "@tailwindcss/vite": "^4.1.6",
     "axios": "^1.9.0",
     "js-cookie": "^3.0.5",

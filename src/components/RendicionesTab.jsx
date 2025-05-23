@@ -1,5 +1,346 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  PDFDownloadLink,
+  Font,
+} from "@react-pdf/renderer";
+
+// Registrar fuente para caracteres especiales
+Font.register({
+  family: "Roboto",
+  src: "https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf",
+});
+
+// Estilos para o PDF
+const pdfStyles = StyleSheet.create({
+  page: {
+    flexDirection: "column",
+    backgroundColor: "#FFFFFF",
+    padding: 30,
+    fontFamily: "Helvetica",
+  },
+  header: {
+    fontSize: 20,
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  subHeader: {
+    fontSize: 12,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#666666",
+  },
+  clientInfo: {
+    backgroundColor: "#F5F5F5",
+    padding: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#DDDDDD",
+  },
+  clientTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  clientRow: {
+    flexDirection: "row",
+    marginBottom: 5,
+  },
+  clientLabel: {
+    fontSize: 10,
+    fontWeight: "bold",
+    width: 80,
+  },
+  clientValue: {
+    fontSize: 10,
+    flex: 1,
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    marginBottom: 20,
+  },
+  tableRow: {
+    margin: "auto",
+    flexDirection: "row",
+  },
+  tableColHeader: {
+    width: "20%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    backgroundColor: "#F0F0F0",
+    padding: 8,
+  },
+  tableCol: {
+    width: "20%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 8,
+  },
+  tableColWide: {
+    width: "40%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 8,
+  },
+  tableCellHeader: {
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  tableCell: {
+    fontSize: 9,
+    textAlign: "left",
+  },
+  tableCellNumber: {
+    fontSize: 9,
+    textAlign: "right",
+  },
+  totalRow: {
+    backgroundColor: "#FFF3CD",
+  },
+  saldoFinal: {
+    backgroundColor: "#FFF3CD",
+    padding: 10,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#000000",
+    marginTop: 10,
+  },
+  saldoText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+});
+
+// Componente PDF
+const RendicionPDF = ({
+  selectedCliente,
+  rendicion,
+  totalAbonos,
+  totalGastos,
+  saldo,
+}) => {
+  const formatDateForDisplay = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("es-ES");
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const ingresos = Array.isArray(rendicion.ingresos) ? rendicion.ingresos : [];
+  const gastos = Array.isArray(rendicion.gastos) ? rendicion.gastos : [];
+
+  return (
+    <Document>
+      <Page size="A4" style={pdfStyles.page}>
+        {/* Header */}
+        <Text style={pdfStyles.header}>RENDICIÓN DE GASTOS</Text>
+        <Text style={pdfStyles.subHeader}>
+          Fecha: {new Date().toLocaleDateString("es-ES")}
+        </Text>
+
+        {/* Información del cliente */}
+        {selectedCliente && (
+          <View style={pdfStyles.clientInfo}>
+            <Text style={pdfStyles.clientTitle}>Información del Cliente:</Text>
+            <View style={pdfStyles.clientRow}>
+              <Text style={pdfStyles.clientLabel}>Nombre:</Text>
+              <Text style={pdfStyles.clientValue}>
+                {selectedCliente.nombre}
+              </Text>
+            </View>
+            <View style={pdfStyles.clientRow}>
+              <Text style={pdfStyles.clientLabel}>RUT:</Text>
+              <Text style={pdfStyles.clientValue}>{selectedCliente.rut}</Text>
+            </View>
+            <View style={pdfStyles.clientRow}>
+              <Text style={pdfStyles.clientLabel}>Correo:</Text>
+              <Text style={pdfStyles.clientValue}>
+                {selectedCliente.correo}
+              </Text>
+            </View>
+            <View style={pdfStyles.clientRow}>
+              <Text style={pdfStyles.clientLabel}>Teléfono:</Text>
+              <Text style={pdfStyles.clientValue}>
+                {selectedCliente.telefono}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Tabla de Ingresos */}
+        <View style={pdfStyles.table}>
+          <View style={pdfStyles.tableRow}>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>INGRESO</Text>
+            </View>
+            <View style={pdfStyles.tableColWide}>
+              <Text style={pdfStyles.tableCellHeader}>DETALLE</Text>
+            </View>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>FECHA</Text>
+            </View>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>MONTO</Text>
+            </View>
+          </View>
+
+          {ingresos.map((ingreso, index) => (
+            <View style={pdfStyles.tableRow} key={index}>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCell}>{ingreso.tipo || ""}</Text>
+              </View>
+              <View style={pdfStyles.tableColWide}>
+                <Text style={pdfStyles.tableCell}>{ingreso.detalle || ""}</Text>
+              </View>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCell}>
+                  {formatDateForDisplay(ingreso.fecha)}
+                </Text>
+              </View>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCellNumber}>
+                  ${ingreso.monto || 0}
+                </Text>
+              </View>
+            </View>
+          ))}
+
+          <View style={[pdfStyles.tableRow, pdfStyles.totalRow]}>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableColWide}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}>Total abonos</Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}>${totalAbonos}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Tabla de Gastos */}
+        <View style={pdfStyles.table}>
+          <View style={pdfStyles.tableRow}>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>GASTO</Text>
+            </View>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>DETALLE</Text>
+            </View>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>FECHA</Text>
+            </View>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>BOLETA</Text>
+            </View>
+            <View style={pdfStyles.tableColHeader}>
+              <Text style={pdfStyles.tableCellHeader}>MONTO</Text>
+            </View>
+          </View>
+
+          {gastos.map((gasto, index) => (
+            <View style={pdfStyles.tableRow} key={index}>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCell}>{gasto.tipo || ""}</Text>
+              </View>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCell}>{gasto.detalle || ""}</Text>
+              </View>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCell}>
+                  {formatDateForDisplay(gasto.fecha)}
+                </Text>
+              </View>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCell}>{gasto.boleta || ""}</Text>
+              </View>
+              <View style={pdfStyles.tableCol}>
+                <Text style={pdfStyles.tableCellNumber}>
+                  ${gasto.monto || 0}
+                </Text>
+              </View>
+            </View>
+          ))}
+
+          <View style={[pdfStyles.tableRow, pdfStyles.totalRow]}>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}>Total gastos</Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}>${totalGastos}</Text>
+            </View>
+          </View>
+
+          <View style={[pdfStyles.tableRow, pdfStyles.totalRow]}>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}></Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}>Saldo</Text>
+            </View>
+            <View style={pdfStyles.tableCol}>
+              <Text style={pdfStyles.tableCellHeader}>${saldo}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Saldo Final */}
+        <View style={pdfStyles.saldoFinal}>
+          <Text style={pdfStyles.saldoText}>
+            Saldo a favor o pagar cliente:{" "}
+            {saldo > 0
+              ? `A favor del cliente: $${saldo}`
+              : saldo < 0
+              ? `A pagar por el cliente: $${Math.abs(saldo)}`
+              : "$0"}
+          </Text>
+        </View>
+      </Page>
+    </Document>
+  );
+};
 
 const RendicionesTab = ({ clientes, readOnly = false }) => {
   const [selectedCliente, setSelectedCliente] = useState(null);
@@ -294,7 +635,11 @@ const RendicionesTab = ({ clientes, readOnly = false }) => {
 
   // Cuando seleccionas una rendición pasada, la cargas en modo solo lectura
   const handleVerRendicion = (rend) => {
-    setSelectedCliente(clientes.find((c) => c.id === rend.clienteId) || null);
+    // Busca el cliente por ID, aunque sea en modo readOnly
+    const cliente = clientes.find(
+      (c) => String(c.id) === String(rend.clienteId)
+    );
+    setSelectedCliente(cliente || null);
     // Asegura que rend.rendicion exista y tenga ingresos/gastos
     let newRendicion = rend.rendicion
       ? rend.rendicion
@@ -398,16 +743,40 @@ const RendicionesTab = ({ clientes, readOnly = false }) => {
                 </button>
                 <button
                   onClick={handlePrint}
-                  className="bg-purple-500 text-white px-3 py-1 rounded"
+                  className="bg-purple-500 cursor-pointer text-white px-3 py-1 rounded"
                 >
                   Imprimir
                 </button>
                 <button
                   onClick={handleGenerateExcel}
-                  className="bg-green-600 text-white px-3 py-1 rounded"
+                  className="bg-green-600 cursor-pointer text-white px-3 py-1 rounded"
+                  disabled={!selectedCliente}
                 >
                   Excel
                 </button>
+                <PDFDownloadLink
+                  document={
+                    <RendicionPDF
+                      selectedCliente={selectedCliente}
+                      rendicion={rendicion}
+                      totalAbonos={totalAbonos}
+                      totalGastos={totalGastos}
+                      saldo={saldo}
+                    />
+                  }
+                  fileName={`rendicion_${selectedCliente.nombre}_${
+                    new Date().toISOString().split("T")[0]
+                  }.pdf`}
+                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                  onError={(err) => {
+                    alert("Error generando PDF: " + err?.message);
+                    console.error("PDF error", err);
+                  }}
+                >
+                  {({ loading }) =>
+                    loading ? "Generando PDF..." : "Descargar PDF"
+                  }
+                </PDFDownloadLink>
               </>
             )
           )}
@@ -415,15 +784,9 @@ const RendicionesTab = ({ clientes, readOnly = false }) => {
             <>
               <button
                 onClick={handlePrint}
-                className="bg-purple-500 text-white px-3 py-1 rounded"
+                className="bg-purple-500 cursor-pointer text-white px-3 py-1 rounded"
               >
                 Imprimir
-              </button>
-              <button
-                onClick={handleGenerateExcel}
-                className="bg-green-600 text-white px-3 py-1 rounded"
-              >
-                Excel
               </button>
             </>
           )}
@@ -505,20 +868,19 @@ const RendicionesTab = ({ clientes, readOnly = false }) => {
           <label className="block mb-2 font-medium">Seleccionar Cliente:</label>
           <select
             className="w-full border p-2 rounded"
-            value={selectedCliente?.id || ""}
+            value={selectedCliente?.id ? String(selectedCliente.id) : ""}
             onChange={(e) => {
               const clienteId = e.target.value;
-              const cliente = clientes.find(
-                (c) => c.id.toString() === clienteId
-              );
-              setSelectedCliente(cliente);
+              // Asegura que la comparación sea por string
+              const cliente = clientes.find((c) => String(c.id) === clienteId);
+              setSelectedCliente(cliente || null);
             }}
           >
             <option value="" disabled>
               Seleccione un cliente
             </option>
             {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
+              <option key={cliente.id} value={String(cliente.id)}>
                 {cliente.nombre} - {cliente.rut}
               </option>
             ))}
