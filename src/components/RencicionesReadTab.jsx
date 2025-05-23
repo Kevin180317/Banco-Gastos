@@ -707,70 +707,44 @@ const RendicionesTab = ({ clientes }) => {
         <h2 className="text-xl font-bold">Rendición de Gastos</h2>
         <div className="space-x-2">
           <button
-            onClick={handleNew}
-            className="bg-green-500 text-white px-3 py-1 rounded"
-          >
-            Nueva
-          </button>
-          <button
             onClick={() => setShowHistorial((v) => !v)}
             className="bg-gray-500 text-white px-3 py-1 rounded"
           >
             {showHistorial ? "Ocultar Historial" : "Ver Historial"}
           </button>
-          {isEditing ? (
+
+          <>
             <button
-              onClick={handleSave}
-              className="bg-blue-500 text-white px-3 py-1 rounded"
+              onClick={handlePrint}
+              className="bg-purple-500 cursor-pointer text-white px-3 py-1 rounded"
             >
-              Guardar
+              Imprimir
             </button>
-          ) : (
-            <>
-              <button
-                onClick={handleEdit}
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-              >
-                Editar
-              </button>
-              <button
-                onClick={handlePrint}
-                className="bg-purple-500 cursor-pointer text-white px-3 py-1 rounded"
-              >
-                Imprimir
-              </button>
-              <button
-                onClick={handleGenerateExcel}
-                className="bg-green-600 cursor-pointer text-white px-3 py-1 rounded"
-                disabled={!selectedCliente}
-              >
-                Excel
-              </button>
-              <PDFDownloadLink
-                document={
-                  <RendicionPDF
-                    selectedCliente={selectedCliente}
-                    rendicion={rendicion}
-                    totalAbonos={totalAbonos}
-                    totalGastos={totalGastos}
-                    saldo={saldo}
-                  />
-                }
-                fileName={`rendicion_${selectedCliente?.nombre}_${
-                  new Date().toISOString().split("T")[0]
-                }.pdf`}
-                className="bg-blue-500 text-white px-3 py-1 rounded"
-                onError={(err) => {
-                  alert("Error generando PDF: " + err?.message);
-                  console.error("PDF error", err);
-                }}
-              >
-                {({ loading }) =>
-                  loading ? "Generando PDF..." : "Descargar PDF"
-                }
-              </PDFDownloadLink>
-            </>
-          )}
+
+            <PDFDownloadLink
+              document={
+                <RendicionPDF
+                  selectedCliente={selectedCliente}
+                  rendicion={rendicion}
+                  totalAbonos={totalAbonos}
+                  totalGastos={totalGastos}
+                  saldo={saldo}
+                />
+              }
+              fileName={`rendicion${
+                new Date().toISOString().split("T")[0]
+              }.pdf`}
+              className="bg-blue-500 text-white px-3 py-1 rounded"
+              onError={(err) => {
+                alert("Error generando PDF: " + err?.message);
+                console.error("PDF error", err);
+              }}
+            >
+              {({ loading }) =>
+                loading ? "Generando PDF..." : "Descargar PDF"
+              }
+            </PDFDownloadLink>
+          </>
         </div>
       </div>
 
@@ -824,12 +798,6 @@ const RendicionesTab = ({ clientes }) => {
                           >
                             Ver
                           </button>
-                          <button
-                            className="text-red-600 underline"
-                            onClick={() => handleEliminarRendicion(rend.id)}
-                          >
-                            Eliminar
-                          </button>
                         </td>
                       </tr>
                     );
@@ -838,32 +806,6 @@ const RendicionesTab = ({ clientes }) => {
               </table>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Selección de cliente - NO se imprime */}
-      {isEditing && (
-        <div className="mb-4 no-print">
-          <label className="block mb-2 font-medium">Seleccionar Cliente:</label>
-          <select
-            className="w-full border p-2 rounded"
-            value={selectedCliente?.id ? String(selectedCliente.id) : ""}
-            onChange={(e) => {
-              const clienteId = e.target.value;
-              // Asegura que la comparación sea por string
-              const cliente = clientes.find((c) => String(c.id) === clienteId);
-              setSelectedCliente(cliente || null);
-            }}
-          >
-            <option value="" disabled>
-              Seleccione un cliente
-            </option>
-            {clientes.map((cliente) => (
-              <option key={cliente.id} value={String(cliente.id)}>
-                {cliente.nombre} - {cliente.rut}
-              </option>
-            ))}
-          </select>
         </div>
       )}
 
@@ -897,7 +839,7 @@ const RendicionesTab = ({ clientes }) => {
           </div>
         )}
 
-        {/* Tablas de rendición */}
+        {/* Tablas de rendición SOLO LECTURA */}
         <div className="overflow-x-auto">
           {/* Tabla de ingresos */}
           <table className="min-w-full mb-4 border">
@@ -907,110 +849,30 @@ const RendicionesTab = ({ clientes }) => {
                 <th className="border px-4 py-2 text-center w-1/2">DETALLE</th>
                 <th className="border px-4 py-2 text-center w-1/8">FECHA</th>
                 <th className="border px-4 py-2 text-center w-1/8">MONTO</th>
-                {isEditing && (
-                  <th className="border px-4 py-2 w-1/12 no-print">ACCIÓN</th>
-                )}
               </tr>
             </thead>
             <tbody>
               {ingresos.map((ingreso, index) => (
                 <tr key={index}>
+                  <td className="border px-4 py-2">{ingreso.tipo || ""}</td>
+                  <td className="border px-4 py-2">{ingreso.detalle || ""}</td>
                   <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={ingreso.tipo || ""}
-                        onChange={(e) =>
-                          handleIngresoChange(index, "tipo", e.target.value)
-                        }
-                      />
-                    ) : (
-                      ingreso.tipo || ""
-                    )}
+                    {formatDateForDisplay(ingreso.fecha)}
                   </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={ingreso.detalle || ""}
-                        onChange={(e) =>
-                          handleIngresoChange(index, "detalle", e.target.value)
-                        }
-                      />
-                    ) : (
-                      ingreso.detalle
-                    )}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        className="w-full p-1 border rounded no-print"
-                        value={formatDateForInput(ingreso.fecha)}
-                        onChange={(e) =>
-                          handleIngresoChange(index, "fecha", e.target.value)
-                        }
-                      />
-                    ) : (
-                      formatDateForDisplay(ingreso.fecha)
-                    )}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={ingreso.monto || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*\.?\d*$/.test(value)) {
-                            handleIngresoChange(index, "monto", value);
-                          }
-                        }}
-                      />
-                    ) : (
-                      `$${ingreso.monto || 0}`
-                    )}
-                  </td>
-                  {isEditing && (
-                    <td className="border px-4 py-2 text-center no-print">
-                      <button
-                        onClick={() => removeIngreso(index)}
-                        className="text-red-500 hover:text-red-700"
-                        disabled={
-                          index === 0 && rendicion.ingresos.length === 1
-                        }
-                      >
-                        ×
-                      </button>
-                    </td>
-                  )}
+                  <td className="border px-4 py-2">${ingreso.monto || 0}</td>
                 </tr>
               ))}
               <tr className="bg-yellow-100 totals">
                 <td
-                  colSpan={isEditing ? "3" : "3"}
+                  colSpan="3"
                   className="border px-4 py-2 text-right font-bold"
                 >
                   Total abonos
                 </td>
                 <td className="border px-4 py-2 font-bold">${totalAbonos}</td>
-                {isEditing && <td className="border no-print"></td>}
               </tr>
             </tbody>
           </table>
-
-          {/* Botón agregar ingreso - NO se imprime */}
-          {isEditing && (
-            <button
-              onClick={addIngreso}
-              className="bg-green-500 text-white px-3 py-1 rounded mb-4 no-print"
-            >
-              + Agregar Ingreso
-            </button>
-          )}
 
           {/* Tabla de gastos */}
           <table className="min-w-full mb-4 border">
@@ -1021,131 +883,40 @@ const RendicionesTab = ({ clientes }) => {
                 <th className="border px-4 py-2 text-center w-1/8">FECHA</th>
                 <th className="border px-4 py-2 text-center w-1/8">BOLETA</th>
                 <th className="border px-4 py-2 text-center w-1/8">MONTO</th>
-                {isEditing && (
-                  <th className="border px-4 py-2 w-1/12 no-print">ACCIÓN</th>
-                )}
               </tr>
             </thead>
             <tbody>
               {gastos.map((gasto, index) => (
                 <tr key={index}>
+                  <td className="border px-4 py-2">{gasto.tipo || ""}</td>
+                  <td className="border px-4 py-2">{gasto.detalle || ""}</td>
                   <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={gasto.tipo || ""}
-                        onChange={(e) =>
-                          handleGastoChange(index, "tipo", e.target.value)
-                        }
-                      />
-                    ) : (
-                      gasto.tipo || ""
-                    )}
+                    {formatDateForDisplay(gasto.fecha)}
                   </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={gasto.detalle || ""}
-                        onChange={(e) =>
-                          handleGastoChange(index, "detalle", e.target.value)
-                        }
-                      />
-                    ) : (
-                      gasto.detalle
-                    )}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        className="w-full p-1 border rounded no-print"
-                        value={formatDateForInput(gasto.fecha)}
-                        onChange={(e) =>
-                          handleGastoChange(index, "fecha", e.target.value)
-                        }
-                      />
-                    ) : (
-                      formatDateForDisplay(gasto.fecha)
-                    )}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={gasto.boleta || ""}
-                        onChange={(e) =>
-                          handleGastoChange(index, "boleta", e.target.value)
-                        }
-                      />
-                    ) : (
-                      gasto.boleta
-                    )}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="w-full p-1 border rounded no-print"
-                        value={gasto.monto || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*\.?\d*$/.test(value)) {
-                            handleGastoChange(index, "monto", value);
-                          }
-                        }}
-                      />
-                    ) : (
-                      `$${gasto.monto || 0}`
-                    )}
-                  </td>
-                  {isEditing && (
-                    <td className="border px-4 py-2 text-center no-print">
-                      <button
-                        onClick={() => removeGasto(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        ×
-                      </button>
-                    </td>
-                  )}
+                  <td className="border px-4 py-2">{gasto.boleta || ""}</td>
+                  <td className="border px-4 py-2">${gasto.monto || 0}</td>
                 </tr>
               ))}
               <tr className="bg-yellow-100 totals">
                 <td
-                  colSpan={isEditing ? "4" : "4"}
+                  colSpan="4"
                   className="border px-4 py-2 text-right font-bold"
                 >
                   Total gastos
                 </td>
                 <td className="border px-4 py-2 font-bold">${totalGastos}</td>
-                {isEditing && <td className="border no-print"></td>}
               </tr>
               <tr className="bg-yellow-100 totals">
                 <td
-                  colSpan={isEditing ? "4" : "4"}
+                  colSpan="4"
                   className="border px-4 py-2 text-right font-bold"
                 >
                   Saldo
                 </td>
                 <td className="border px-4 py-2 font-bold">${saldo}</td>
-                {isEditing && <td className="border no-print"></td>}
               </tr>
             </tbody>
           </table>
-
-          {/* Botón agregar gasto - NO se imprime */}
-          {isEditing && (
-            <button
-              onClick={addGasto}
-              className="bg-green-500 text-white px-3 py-1 rounded mb-4 no-print"
-            >
-              + Agregar Gasto
-            </button>
-          )}
 
           {/* Saldo final */}
           <table className="min-w-full mb-4 border">

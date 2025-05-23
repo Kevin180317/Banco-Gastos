@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../components/useAuth";
 import useLogout from "../components/useLogout";
-import RendicionesTab from "../components/RendicionesTab";
+import RendicionesUserTab from "../components/RencicionesReadTab";
 
 const LOGO_URL = "/logo.png";
 
@@ -194,7 +194,7 @@ Dinero: $${c.dinero}`;
       {tab === "rendiciones" && (
         <div>
           <h2 className="text-xl font-bold mb-4">Mis Rendiciones</h2>
-          <RendicionesTab clientes={clientes} readOnly={true} />
+          <RendicionesUserTab clientes={clientes} />
         </div>
       )}
       {tab === "contacto" && (
