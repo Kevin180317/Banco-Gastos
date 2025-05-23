@@ -712,39 +712,6 @@ const RendicionesTab = ({ clientes }) => {
           >
             {showHistorial ? "Ocultar Historial" : "Ver Historial"}
           </button>
-
-          <>
-            <button
-              onClick={handlePrint}
-              className="bg-purple-500 cursor-pointer text-white px-3 py-1 rounded"
-            >
-              Imprimir
-            </button>
-
-            <PDFDownloadLink
-              document={
-                <RendicionPDF
-                  selectedCliente={selectedCliente}
-                  rendicion={rendicion}
-                  totalAbonos={totalAbonos}
-                  totalGastos={totalGastos}
-                  saldo={saldo}
-                />
-              }
-              fileName={`rendicion${
-                new Date().toISOString().split("T")[0]
-              }.pdf`}
-              className="bg-blue-500 text-white px-3 py-1 rounded"
-              onError={(err) => {
-                alert("Error generando PDF: " + err?.message);
-                console.error("PDF error", err);
-              }}
-            >
-              {({ loading }) =>
-                loading ? "Generando PDF..." : "Descargar PDF"
-              }
-            </PDFDownloadLink>
-          </>
         </div>
       </div>
 

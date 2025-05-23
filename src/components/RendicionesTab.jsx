@@ -747,16 +747,30 @@ const RendicionesTab = ({ clientes }) => {
                 Excel
               </button>
               <PDFDownloadLink
+                key={
+                  selectedRendicion
+                    ? `pdf-${selectedRendicion.id}`
+                    : selectedCliente
+                    ? `pdf-${selectedCliente.id}`
+                    : "pdf-default"
+                }
                 document={
                   <RendicionPDF
-                    selectedCliente={selectedCliente}
-                    rendicion={rendicion}
-                    totalAbonos={totalAbonos}
-                    totalGastos={totalGastos}
-                    saldo={saldo}
+                    selectedCliente={
+                      selectedCliente || {
+                        nombre: "",
+                        rut: "",
+                        correo: "",
+                        telefono: "",
+                      }
+                    }
+                    rendicion={rendicion || { ingresos: [], gastos: [] }}
+                    totalAbonos={totalAbonos || 0}
+                    totalGastos={totalGastos || 0}
+                    saldo={saldo || 0}
                   />
                 }
-                fileName={`rendicion_${selectedCliente?.nombre}_${
+                fileName={`rendicion_${selectedCliente?.nombre || "cliente"}_${
                   new Date().toISOString().split("T")[0]
                 }.pdf`}
                 className="bg-blue-500 text-white px-3 py-1 rounded"
