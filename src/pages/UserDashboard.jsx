@@ -11,30 +11,51 @@ const UserDashboard = () => {
   const { logout } = useLogout();
   const [tab, setTab] = useState("inicio");
   const [clientes, setClientes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [saldos, setSaldos] = useState({});
+
   // PAGINACIÓN
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [loadingClientes, setLoadingClientes] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
+  const fetchClientes = () => {
+    setLoadingClientes(true);
+    axios
+      .get("http://localhost:5000/clientes", { withCredentials: true })
+      .then((res) =>
+        setClientes(
+          res.data.map((c) => ({
+            ...c,
+            dinero:
+              c.dinero !== undefined && c.dinero !== null
+                ? Number(c.dinero)
+                : 0,
+          }))
+        )
+      )
+      .catch(() => setClientes([]))
+      .finally(() => setLoadingClientes(false));
+  };
+
+  const fetchSaldos = () => {
+    axios
+      .get("http://localhost:5000/saldos-clientes", { withCredentials: true })
+      .then((res) => {
+        const saldosObj = {};
+        res.data.forEach((s) => {
+          saldosObj[s.cliente_id] = s.saldo;
+        });
+        setSaldos(saldosObj);
+      })
+      .catch(() => setSaldos({}));
+  };
+
   useEffect(() => {
     if (tab === "clientes") {
-      setLoadingClientes(true);
-      axios
-        .get("http://localhost:5000/clientes", { withCredentials: true })
-        .then((res) =>
-          setClientes(
-            res.data.map((c) => ({
-              ...c,
-              dinero:
-                c.dinero !== undefined && c.dinero !== null
-                  ? Number(c.dinero)
-                  : 0,
-            }))
-          )
-        )
-        .catch(() => setClientes([]))
-        .finally(() => setLoadingClientes(false));
+      fetchClientes();
+      fetchSaldos();
     }
   }, [tab]);
 
@@ -47,12 +68,39 @@ const UserDashboard = () => {
     { key: "contacto", label: "Contacto" },
   ];
 
+  // Filtrar clientes basado en el término de búsqueda
+  const filteredClientes = clientes.filter((cliente) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      cliente.nombre.toLowerCase().includes(searchLower) ||
+      cliente.rut.toLowerCase().includes(searchLower) ||
+      cliente.correo.toLowerCase().includes(searchLower) ||
+      (cliente.telefono &&
+        cliente.telefono.toLowerCase().includes(searchLower)) ||
+      (cliente.direccion &&
+        cliente.direccion.toLowerCase().includes(searchLower)) ||
+      (cliente.giro && cliente.giro.toLowerCase().includes(searchLower))
+    );
+  });
+
   // PAGINACIÓN
-  const totalPages = Math.ceil(clientes.length / itemsPerPage);
-  const paginatedClientes = clientes.slice(
+  const totalPages = Math.ceil(filteredClientes.length / itemsPerPage);
+  const paginatedClientes = filteredClientes.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // Manejar cambio en el buscador
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Resetear a la primera página al buscar
+  };
+
+  // Limpiar búsqueda
+  const clearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-4">
@@ -91,6 +139,43 @@ const UserDashboard = () => {
       {tab === "clientes" && (
         <div>
           <h2 className="text-xl font-bold mb-4">Lista de Clientes</h2>
+
+          <div className="mb-4 flex gap-2 items-center">
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Buscar por nombre, RUT, correo, teléfono, dirección o giro..."
+                className="w-full border px-3 py-2 rounded-lg pr-10"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  title="Limpiar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <span className="text-sm text-gray-600">
+                {filteredClientes.length} de {clientes.length} clientes
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={() => {
+              fetchClientes();
+              fetchSaldos();
+            }}
+            className="mb-8 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            title="Actualizar lista de clientes"
+          >
+            Actualizar pagina
+          </button>
           {loadingClientes ? (
             <p>Cargando clientes...</p>
           ) : clientes.length === 0 ? (
@@ -128,7 +213,12 @@ const UserDashboard = () => {
                         <td className="px-3 py-2 border">{c.giro}</td>
                         <td className="px-3 py-2 border">
                           <span className="text-green-600 font-semibold">
-                            ${c.dinero}
+                            $
+                            {Number(c.dinero) +
+                              (saldos[c.id] !== undefined &&
+                              saldos[c.id] !== null
+                                ? Number(saldos[c.id])
+                                : 0)}
                           </span>
                         </td>
                         <td className="px-3 py-2 border">
@@ -212,7 +302,7 @@ Dinero: $${c.dinero}`;
               <strong>Teléfono:</strong> 225779000
             </p>
             <p>
-              <strong>Email:</strong> Isabel.quiros@ocl.cl
+              <strong>Email:</strong> Isabel.quiroz@ocl.cl
             </p>
             <a
               href="https://ocl.cl/"

@@ -350,6 +350,24 @@ app.put("/rendiciones/:id", (req, res) => {
   );
 });
 
+app.get("/saldos-clientes", (req, res) => {
+  const sql = `
+    SELECT c.id AS cliente_id, SUM(r.saldo) AS saldo
+    FROM clientes c
+    LEFT JOIN rendiciones r ON c.id = r.cliente_id
+    GROUP BY c.id
+  `;
+  connnection.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener los saldos de clientes:", err);
+      return res
+        .status(500)
+        .json({ error: "Error al obtener los saldos de clientes" });
+    }
+    res.json(results);
+  });
+});
+
 // Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);

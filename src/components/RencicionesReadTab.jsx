@@ -343,6 +343,8 @@ const RendicionPDF = ({
 };
 
 const RendicionesTab = ({ clientes }) => {
+  const [saldos, setSaldos] = useState({});
+
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [rendicion, setRendicion] = useState({
     ingresos: [{ tipo: "", detalle: "", monto: "", fecha: "" }],
@@ -700,6 +702,19 @@ const RendicionesTab = ({ clientes }) => {
   const ingresos = Array.isArray(rendicion.ingresos) ? rendicion.ingresos : [];
   const gastos = Array.isArray(rendicion.gastos) ? rendicion.gastos : [];
 
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/saldos-clientes", { withCredentials: true })
+      .then((res) => {
+        const saldosObj = {};
+        res.data.forEach((s) => {
+          saldosObj[s.cliente_id] = s.saldo;
+        });
+        setSaldos(saldosObj);
+      })
+      .catch(() => setSaldos({}));
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Botones de acción - NO se imprimen */}
@@ -801,6 +816,21 @@ const RendicionesTab = ({ clientes }) => {
               </p>
               <p>
                 <strong>Teléfono:</strong> {selectedCliente.telefono}
+              </p>
+              <p>
+                <strong>Cantidad de dinero:</strong> {selectedCliente.dinero}
+              </p>
+              <p>
+                <strong>Cantidad actual después de rendiciones:</strong>{" "}
+                {saldos[selectedCliente.id] === undefined ||
+                saldos[selectedCliente.id] === null ? (
+                  <span className="text-gray-500">
+                    El cliente no tiene rendiciones
+                  </span>
+                ) : (
+                  Number(selectedCliente.dinero) +
+                  Number(saldos[selectedCliente.id])
+                )}
               </p>
             </div>
           </div>

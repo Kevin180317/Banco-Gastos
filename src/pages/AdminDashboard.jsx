@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const { user, loading } = useAuth("admin");
   const { logout } = useLogout();
   const [tab, setTab] = useState("inicio");
+  const [saldos, setSaldos] = useState({});
 
   const [clientes, setClientes] = useState([]);
   // PAGINACIÓN
@@ -53,8 +54,25 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchSaldos = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/saldos-clientes", {
+        withCredentials: true,
+      });
+      // Convierte el array a un objeto para acceso rápido por cliente_id
+      const saldosObj = {};
+      res.data.forEach((s) => {
+        saldosObj[s.cliente_id] = s.saldo;
+      });
+      setSaldos(saldosObj);
+    } catch (error) {
+      console.error("Error al obtener saldos", error);
+    }
+  };
+
   useEffect(() => {
     fetchClientes();
+    fetchSaldos();
   }, []);
 
   // Filtrar clientes basado en el término de búsqueda
@@ -267,6 +285,17 @@ const AdminDashboard = () => {
             )}
           </div>
 
+          <button
+            onClick={() => {
+              fetchClientes();
+              fetchSaldos();
+            }}
+            className="mb-8 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            title="Actualizar lista de clientes"
+          >
+            Actualizar pagina
+          </button>
+
           {loadingClientes ? (
             <p>Cargando clientes...</p>
           ) : filteredClientes.length === 0 ? (
@@ -309,7 +338,12 @@ const AdminDashboard = () => {
                         <td className="px-3 py-2 border">{c.giro}</td>
                         <td className="px-3 py-2 border">
                           <span className="text-green-600 font-semibold">
-                            ${c.dinero}
+                            $
+                            {Number(c.dinero) +
+                              (saldos[c.id] !== undefined &&
+                              saldos[c.id] !== null
+                                ? Number(saldos[c.id])
+                                : 0)}
                           </span>
                         </td>
                         <td className="px-3 py-2 border  gap-2">
@@ -519,7 +553,7 @@ Dinero: $${c.dinero}`;
               <strong>Teléfono:</strong> 225779000
             </p>
             <p>
-              <strong>Email:</strong> Isabel.quiros@ocl.cl
+              <strong>Email:</strong> Isabel.quiroz@ocl.cl
             </p>
             <a
               href="https://ocl.cl/"
