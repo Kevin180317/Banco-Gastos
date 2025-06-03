@@ -9,6 +9,7 @@ import {
   StyleSheet,
   PDFDownloadLink,
   Font,
+  Image,
 } from "@react-pdf/renderer";
 
 // Registrar fuente para caracteres especiales
@@ -139,6 +140,10 @@ const RendicionPDF = ({
   totalAbonos,
   totalGastos,
   saldo,
+  saldoAntes,
+  saldoRendicion,
+  saldoTotal,
+  dineroActual,
 }) => {
   const formatDateForDisplay = (dateStr) => {
     if (!dateStr) return "";
@@ -156,6 +161,10 @@ const RendicionPDF = ({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        <Image
+          src="/logo.png" // Cambia esto por la ruta o URL de tu logo
+          style={{ marginBottom: 40 }}
+        />
         {/* Header */}
         <Text style={pdfStyles.header}>RENDICIÓN DE GASTOS</Text>
         <Text style={pdfStyles.subHeader}>
@@ -165,28 +174,67 @@ const RendicionPDF = ({
         {/* Información del cliente */}
         {selectedCliente && (
           <View style={pdfStyles.clientInfo}>
-            <Text style={pdfStyles.clientTitle}>Información del Cliente:</Text>
-            <View style={pdfStyles.clientRow}>
-              <Text style={pdfStyles.clientLabel}>Nombre:</Text>
-              <Text style={pdfStyles.clientValue}>
-                {selectedCliente.nombre}
-              </Text>
-            </View>
-            <View style={pdfStyles.clientRow}>
-              <Text style={pdfStyles.clientLabel}>RUT:</Text>
-              <Text style={pdfStyles.clientValue}>{selectedCliente.rut}</Text>
-            </View>
-            <View style={pdfStyles.clientRow}>
-              <Text style={pdfStyles.clientLabel}>Correo:</Text>
-              <Text style={pdfStyles.clientValue}>
-                {selectedCliente.correo}
-              </Text>
-            </View>
-            <View style={pdfStyles.clientRow}>
-              <Text style={pdfStyles.clientLabel}>Teléfono:</Text>
-              <Text style={pdfStyles.clientValue}>
-                {selectedCliente.telefono}
-              </Text>
+            <View style={{ flexDirection: "row" }}>
+              {/* Primera columna */}
+
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={pdfStyles.clientTitle}>
+                  Información del Cliente:
+                </Text>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>Nombre:</Text>
+                  <Text style={pdfStyles.clientValue}>
+                    {selectedCliente.nombre}
+                  </Text>
+                </View>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>RUT:</Text>
+                  <Text style={pdfStyles.clientValue}>
+                    {selectedCliente.rut}
+                  </Text>
+                </View>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>Correo:</Text>
+                  <Text style={pdfStyles.clientValue}>
+                    {selectedCliente.correo}
+                  </Text>
+                </View>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>Teléfono:</Text>
+                  <Text style={pdfStyles.clientValue}>
+                    {selectedCliente.telefono}
+                  </Text>
+                </View>
+              </View>
+              {/* Segunda columna */}
+
+              <View style={{ flex: 1 }}>
+                <Text style={pdfStyles.clientTitle}>
+                  Información de la Rendicion:
+                </Text>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>
+                    Dinero antes de la rendición:
+                  </Text>
+                  <Text style={pdfStyles.clientValue}>${saldoTotal}</Text>
+                </View>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>
+                    Total de gastos de la rendición actual:
+                  </Text>
+                  <Text style={pdfStyles.clientValue}>${saldoRendicion}</Text>
+                </View>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>
+                    Dinero después de la rendición actual:
+                  </Text>
+                  <Text style={pdfStyles.clientValue}>${saldoAntes}</Text>
+                </View>
+                <View style={pdfStyles.clientRow}>
+                  <Text style={pdfStyles.clientLabel}>Dinero actual:</Text>
+                  <Text style={pdfStyles.clientValue}>${dineroActual}</Text>
+                </View>
+              </View>
             </View>
           </View>
         )}
@@ -721,6 +769,24 @@ const RendicionesTab = ({ clientes }) => {
     fetchSaldos();
   }, []);
 
+  const saldoAntes =
+    selectedCliente &&
+    saldos[selectedCliente?.id] !== undefined &&
+    saldos[selectedCliente?.id] !== null
+      ? Number(selectedCliente.dinero)
+      : Number(selectedCliente?.dinero) || 0;
+
+  const saldoRendicion = totalGastos;
+
+  const saldoDespues = saldoAntes - saldoRendicion;
+
+  const dineroActual =
+    selectedCliente &&
+    saldos[selectedCliente?.id] !== undefined &&
+    saldos[selectedCliente?.id] !== null
+      ? Number(saldos[selectedCliente.id])
+      : Number(selectedCliente?.dinero) || 0;
+
   return (
     <div className="space-y-6">
       {/* Botones de acción - NO se imprimen */}
@@ -767,6 +833,7 @@ const RendicionesTab = ({ clientes }) => {
               >
                 Excel
               </button>
+
               <PDFDownloadLink
                 key={
                   selectedRendicion
@@ -789,6 +856,10 @@ const RendicionesTab = ({ clientes }) => {
                     totalAbonos={totalAbonos || 0}
                     totalGastos={totalGastos || 0}
                     saldo={saldo || 0}
+                    saldoAntes={saldoDespues}
+                    saldoRendicion={saldoRendicion}
+                    saldoTotal={saldoAntes}
+                    dineroActual={dineroActual}
                   />
                 }
                 fileName={`rendicion_${selectedCliente?.nombre || "cliente"}_${
@@ -804,6 +875,12 @@ const RendicionesTab = ({ clientes }) => {
                   loading ? "Generando PDF..." : "Descargar PDF"
                 }
               </PDFDownloadLink>
+              <button
+                onClick={fetchSaldos}
+                className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer"
+              >
+                Actualizar info
+              </button>
             </>
           )}
         </div>
@@ -933,15 +1010,30 @@ const RendicionesTab = ({ clientes }) => {
                 <strong>Cantidad de dinero:</strong> {selectedCliente.dinero}
               </p>
               <p>
-                <strong>Cantidad actual después de rendiciones:</strong>{" "}
+                <strong>Cantidad después de la rendición actual:</strong>{" "}
+                {selectedCliente && totalGastos !== undefined
+                  ? Number(selectedCliente.dinero) - Number(totalGastos)
+                  : "-"}
+              </p>
+              <p>
+                <strong>
+                  Cantidad actual después del total de rendiciones:
+                </strong>{" "}
                 {saldos[selectedCliente.id] === undefined ||
                 saldos[selectedCliente.id] === null ? (
                   <span className="text-gray-500">
                     El cliente no tiene rendiciones
                   </span>
                 ) : (
-                  Number(selectedCliente.dinero) +
-                  Number(saldos[selectedCliente.id])
+                  <span
+                    className={`font-semibold ${
+                      saldos[selectedCliente.id] >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    ${saldos[selectedCliente.id]}
+                  </span>
                 )}
               </p>
             </div>

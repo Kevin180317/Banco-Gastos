@@ -352,7 +352,9 @@ app.put("/rendiciones/:id", (req, res) => {
 
 app.get("/saldos-clientes", (req, res) => {
   const sql = `
-    SELECT c.id AS cliente_id, SUM(r.saldo) AS saldo
+    SELECT 
+      c.id AS cliente_id,
+      c.dinero - IFNULL(SUM(r.total_gastos), 0) AS saldo
     FROM clientes c
     LEFT JOIN rendiciones r ON c.id = r.cliente_id
     GROUP BY c.id

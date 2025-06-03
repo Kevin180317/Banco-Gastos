@@ -212,13 +212,14 @@ const UserDashboard = () => {
                         <td className="px-3 py-2 border">{c.direccion}</td>
                         <td className="px-3 py-2 border">{c.giro}</td>
                         <td className="px-3 py-2 border">
-                          <span className="text-green-600 font-semibold">
-                            $
-                            {Number(c.dinero) +
-                              (saldos[c.id] !== undefined &&
-                              saldos[c.id] !== null
-                                ? Number(saldos[c.id])
-                                : 0)}
+                          <span
+                            className={`font-semibold ${
+                              saldos[c.id] >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            ${saldos[c.id] ?? c.dinero}
                           </span>
                         </td>
                         <td className="px-3 py-2 border">
