@@ -377,12 +377,12 @@ const RendicionPDF = ({
         {/* Saldo Final */}
         <View style={pdfStyles.saldoFinal}>
           <Text style={pdfStyles.saldoText}>
-            Saldo a favor o pagar cliente:{" "}
-            {saldo > 0
-              ? `A favor del cliente: $${saldo}`
-              : saldo < 0
-              ? `A pagar por el cliente: $${Math.abs(saldo)}`
-              : "$0"}
+            {Number(dineroActual) >= 0
+              ? "Saldo a favor: "
+              : "Saldo en contra: "}
+            <Text style={Number(dineroActual) < 0 ? { color: "red" } : {}}>
+              ${dineroActual}
+            </Text>
           </Text>
         </View>
       </Page>
@@ -402,6 +402,7 @@ const RendicionesTab = ({ clientes }) => {
   const [isEditing, setIsEditing] = useState(true);
   const [historial, setHistorial] = useState([]);
   const [showHistorial, setShowHistorial] = useState(false);
+  const [mostrarSaldoFinal, setMostrarSaldoFinal] = useState(false);
   const [selectedRendicion, setSelectedRendicion] = useState(null);
 
   const printRef = useRef();
@@ -794,13 +795,21 @@ const RendicionesTab = ({ clientes }) => {
         <h2 className="text-xl font-bold">Rendición de Gastos</h2>
         <div className="space-x-2">
           <button
-            onClick={handleNew}
+            onClick={() => {
+              handleNew();
+              setMostrarSaldoFinal(true);
+            }}
             className="bg-green-500 text-white px-3 py-1 rounded"
           >
             Nueva
           </button>
           <button
-            onClick={() => setShowHistorial((v) => !v)}
+            onClick={() => {
+              setShowHistorial((v) => {
+                setMostrarSaldoFinal(false);
+                return !v;
+              });
+            }}
             className="bg-gray-500 text-white px-3 py-1 rounded"
           >
             {showHistorial ? "Ocultar Historial" : "Ver Historial"}
@@ -833,7 +842,12 @@ const RendicionesTab = ({ clientes }) => {
               >
                 Excel
               </button>
-
+              <button
+                onClick={fetchSaldos}
+                className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer"
+              >
+                Actualizar info
+              </button>
               <PDFDownloadLink
                 key={
                   selectedRendicion
@@ -875,12 +889,6 @@ const RendicionesTab = ({ clientes }) => {
                   loading ? "Generando PDF..." : "Descargar PDF"
                 }
               </PDFDownloadLink>
-              <button
-                onClick={fetchSaldos}
-                className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer"
-              >
-                Actualizar info
-              </button>
             </>
           )}
         </div>
@@ -961,6 +969,8 @@ const RendicionesTab = ({ clientes }) => {
             className="w-full border p-2 rounded"
             value={selectedCliente?.id ? String(selectedCliente.id) : ""}
             onChange={(e) => {
+              setMostrarSaldoFinal(true);
+
               const clienteId = e.target.value;
               // Asegura que la comparación sea por string
               const cliente = clientes.find((c) => String(c.id) === clienteId);
@@ -1291,22 +1301,33 @@ const RendicionesTab = ({ clientes }) => {
           )}
 
           {/* Saldo final */}
-          <table className="min-w-full mb-4 border">
-            <tbody>
-              <tr className="saldo-final">
-                <td className="border px-4 py-2 text-center font-bold w-1/2">
-                  Saldo a favor o pagar cliente
-                </td>
-                <td className="border px-4 py-2 w-1/2 font-bold">
-                  {saldo > 0
-                    ? `A favor del cliente: $${saldo}`
-                    : saldo < 0
-                    ? `A pagar por el cliente: $${Math.abs(saldo)}`
-                    : "$0"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {mostrarSaldoFinal && selectedCliente && (
+            <table className="min-w-full mb-4 border">
+              <tbody>
+                <tr className="saldo-final">
+                  <td className="border px-4 py-2 text-center font-bold w-1/2">
+                    {(saldos[selectedCliente?.id] || 0) - totalGastos >= 0
+                      ? "Saldo a favor después de la rendición"
+                      : "Saldo en contra después de la rendición"}
+                  </td>
+                  <td className="border px-4 py-2 w-1/2 font-bold">
+                    $
+                    <span
+                      style={
+                        (saldos[selectedCliente?.id] || 0) - totalGastos < 0
+                          ? { color: "red" }
+                          : {}
+                      }
+                    >
+                      {(
+                        (saldos[selectedCliente?.id] || 0) - totalGastos
+                      ).toFixed(2)}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
