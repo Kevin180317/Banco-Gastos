@@ -982,14 +982,27 @@ const RendicionesTab = ({ clientes }) => {
             <tbody>
               <tr className="saldo-final">
                 <td className="border px-4 py-2 text-center font-bold w-1/2">
-                  Saldo a favor o pagar cliente
+                  {(saldos[selectedCliente?.id] || 0) - totalGastos >= 0
+                    ? "Saldo a favor después de la rendición"
+                    : "Saldo en contra después de la rendición"}
                 </td>
                 <td className="border px-4 py-2 w-1/2 font-bold">
-                  {saldo > 0
-                    ? `A favor del cliente: $${saldo}`
-                    : saldo < 0
-                    ? `A pagar por el cliente: $${Math.abs(saldo)}`
-                    : "$0"}
+                  {saldos[selectedCliente.id] === undefined ||
+                  saldos[selectedCliente.id] === null ? (
+                    <span className="text-gray-500">
+                      El cliente no tiene rendiciones
+                    </span>
+                  ) : (
+                    <span
+                      className={`font-semibold ${
+                        saldos[selectedCliente.id] >= 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      ${saldos[selectedCliente.id]}
+                    </span>
+                  )}
                 </td>
               </tr>
             </tbody>
