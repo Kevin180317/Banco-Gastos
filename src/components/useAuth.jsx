@@ -8,11 +8,12 @@ const useAuth = (requiredRole) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const validateSession = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/dashboard", {
+        const response = await axios.get(`${API_URL}/dashboard`, {
           withCredentials: true,
         });
 

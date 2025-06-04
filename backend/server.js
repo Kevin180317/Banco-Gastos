@@ -9,8 +9,8 @@ const PORT = 5000;
 // Configuración de CORS
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"], // Agrega "PUT" aquí
+    origin: ["http://localhost:5173", "http://192.168.0.122:5173"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
@@ -371,6 +371,6 @@ app.get("/saldos-clientes", (req, res) => {
 });
 
 // Iniciar el servidor
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });

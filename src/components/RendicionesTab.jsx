@@ -391,6 +391,8 @@ const RendicionPDF = ({
 };
 
 const RendicionesTab = ({ clientes }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [rendicion, setRendicion] = useState({
     ingresos: [{ tipo: "", detalle: "", monto: "", fecha: "" }],
@@ -428,7 +430,7 @@ const RendicionesTab = ({ clientes }) => {
   useEffect(() => {
     if (showHistorial) {
       axios
-        .get("http://localhost:5000/rendiciones", { withCredentials: true })
+        .get(`${API_URL}/rendiciones`, { withCredentials: true })
         .then((res) => setHistorial(res.data))
         .catch(() => setHistorial([]));
     }
@@ -525,7 +527,7 @@ const RendicionesTab = ({ clientes }) => {
       if (selectedRendicion && selectedRendicion.id) {
         // Actualizar rendición existente
         await axios.put(
-          `http://localhost:5000/rendiciones/${selectedRendicion.id}`,
+          `${API_URL}/rendiciones/${selectedRendicion.id}`,
           {
             clienteId: selectedCliente.id,
             rendicion: rendicion,
@@ -539,7 +541,7 @@ const RendicionesTab = ({ clientes }) => {
       } else {
         // Crear nueva rendición
         await axios.post(
-          "http://localhost:5000/rendiciones",
+          `${API_URL}/rendiciones`,
           {
             clienteId: selectedCliente.id,
             rendicion: rendicion,
@@ -701,7 +703,7 @@ const RendicionesTab = ({ clientes }) => {
   const handleEliminarRendicion = async (rendId) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta rendición?")) return;
     try {
-      await axios.delete(`http://localhost:5000/rendiciones/${rendId}`, {
+      await axios.delete(`${API_URL}/rendiciones/${rendId}`, {
         withCredentials: true,
       });
       setHistorial((prev) => prev.filter((r) => r.id !== rendId));
@@ -753,7 +755,7 @@ const RendicionesTab = ({ clientes }) => {
 
   const fetchSaldos = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/saldos-clientes", {
+      const res = await axios.get(`${API_URL}/saldos-clientes`, {
         withCredentials: true,
       });
       const saldosObj = {};
@@ -1301,7 +1303,7 @@ const RendicionesTab = ({ clientes }) => {
           )}
 
           {/* Saldo final */}
-          {mostrarSaldoFinal && selectedCliente && (
+          {selectedCliente && (
             <table className="min-w-full mb-4 border">
               <tbody>
                 <tr className="saldo-final">
@@ -1314,14 +1316,14 @@ const RendicionesTab = ({ clientes }) => {
                     $
                     <span
                       style={
-                        (saldos[selectedCliente?.id] || 0) - totalGastos < 0
+                        (Number(saldos[selectedCliente?.id]) || 0) -
+                          totalGastos <
+                        0
                           ? { color: "red" }
                           : {}
                       }
                     >
-                      {(
-                        (saldos[selectedCliente?.id] || 0) - totalGastos
-                      ).toFixed(2)}
+                      {(Number(saldos[selectedCliente?.id]) || 0).toFixed(2)}
                     </span>
                   </td>
                 </tr>

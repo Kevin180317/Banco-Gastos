@@ -390,6 +390,8 @@ const RendicionPDF = ({
 };
 
 const RendicionesTab = ({ clientes }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [saldos, setSaldos] = useState({});
 
   const [selectedCliente, setSelectedCliente] = useState(null);
@@ -428,7 +430,7 @@ const RendicionesTab = ({ clientes }) => {
   useEffect(() => {
     if (showHistorial) {
       axios
-        .get("http://localhost:5000/rendiciones", { withCredentials: true })
+        .get(`${API_URL}/rendiciones`, { withCredentials: true })
         .then((res) => setHistorial(res.data))
         .catch(() => setHistorial([]));
     }
@@ -525,7 +527,7 @@ const RendicionesTab = ({ clientes }) => {
       if (selectedRendicion && selectedRendicion.id) {
         // Actualizar rendición existente
         await axios.put(
-          `http://localhost:5000/rendiciones/${selectedRendicion.id}`,
+          `${API_URL}/rendiciones/${selectedRendicion.id}`,
           {
             clienteId: selectedCliente.id,
             rendicion: rendicion,
@@ -539,7 +541,7 @@ const RendicionesTab = ({ clientes }) => {
       } else {
         // Crear nueva rendición
         await axios.post(
-          "http://localhost:5000/rendiciones",
+          `${API_URL}/rendiciones`,
           {
             clienteId: selectedCliente.id,
             rendicion: rendicion,
@@ -701,7 +703,7 @@ const RendicionesTab = ({ clientes }) => {
   const handleEliminarRendicion = async (rendId) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta rendición?")) return;
     try {
-      await axios.delete(`http://localhost:5000/rendiciones/${rendId}`, {
+      await axios.delete(`${API_URL}/rendiciones/${rendId}`, {
         withCredentials: true,
       });
       setHistorial((prev) => prev.filter((r) => r.id !== rendId));
@@ -751,7 +753,7 @@ const RendicionesTab = ({ clientes }) => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/saldos-clientes", { withCredentials: true })
+      .get(`${API_URL}/saldos-clientes`, { withCredentials: true })
       .then((res) => {
         const saldosObj = {};
         res.data.forEach((s) => {
@@ -987,20 +989,21 @@ const RendicionesTab = ({ clientes }) => {
                     : "Saldo en contra después de la rendición"}
                 </td>
                 <td className="border px-4 py-2 w-1/2 font-bold">
-                  {saldos[selectedCliente.id] === undefined ||
-                  saldos[selectedCliente.id] === null ? (
+                  {selectedCliente?.id === undefined ||
+                  saldos[selectedCliente?.id] === undefined ||
+                  saldos[selectedCliente?.id] === null ? (
                     <span className="text-gray-500">
                       El cliente no tiene rendiciones
                     </span>
                   ) : (
                     <span
                       className={`font-semibold ${
-                        saldos[selectedCliente.id] >= 0
+                        saldos[selectedCliente?.id] >= 0
                           ? "text-green-600"
                           : "text-red-600"
                       }`}
                     >
-                      ${saldos[selectedCliente.id]}
+                      ${saldos[selectedCliente?.id]}
                     </span>
                   )}
                 </td>

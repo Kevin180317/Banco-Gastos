@@ -7,11 +7,12 @@ import { useNavigate } from "react-router-dom";
 const useLogin = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const login = async (username, password) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/login",
+        `${API_URL}/login`,
         { username, password },
         { withCredentials: true }
       );

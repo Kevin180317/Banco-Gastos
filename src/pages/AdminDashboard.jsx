@@ -10,6 +10,7 @@ const AdminDashboard = () => {
   const { logout } = useLogout();
   const [tab, setTab] = useState("inicio");
   const [saldos, setSaldos] = useState({});
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [clientes, setClientes] = useState([]);
   // PAGINACIÓN
@@ -36,7 +37,7 @@ const AdminDashboard = () => {
   const fetchClientes = async () => {
     setLoadingClientes(true);
     try {
-      const res = await axios.get("http://localhost:5000/clientes", {
+      const res = await axios.get(`${API_URL}/clientes`, {
         withCredentials: true,
       });
       // Asegura que todos los clientes tengan dinero como número
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
 
   const fetchSaldos = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/saldos-clientes", {
+      const res = await axios.get(`${API_URL}/saldos-clientes`, {
         withCredentials: true,
       });
       // Convierte el array a un objeto para acceso rápido por cliente_id
@@ -159,13 +160,13 @@ const AdminDashboard = () => {
       if (selectedCliente) {
         // Actualizar cliente
         await axios.put(
-          `http://localhost:5000/clientes/${selectedCliente.id}`,
+          `${API_URL}/clientes/${selectedCliente.id}`,
           dataToSend,
           { withCredentials: true }
         );
       } else {
         // Crear nuevo cliente
-        await axios.post("http://localhost:5000/clientes", dataToSend, {
+        await axios.post("${API_URL}/clientes", dataToSend, {
           withCredentials: true,
         });
       }

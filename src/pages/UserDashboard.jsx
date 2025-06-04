@@ -13,6 +13,7 @@ const UserDashboard = () => {
   const [clientes, setClientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [saldos, setSaldos] = useState({});
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // PAGINACIÓN
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,7 +24,7 @@ const UserDashboard = () => {
   const fetchClientes = () => {
     setLoadingClientes(true);
     axios
-      .get("http://localhost:5000/clientes", { withCredentials: true })
+      .get(`${API_URL}/clientes`, { withCredentials: true })
       .then((res) =>
         setClientes(
           res.data.map((c) => ({
@@ -41,7 +42,7 @@ const UserDashboard = () => {
 
   const fetchSaldos = () => {
     axios
-      .get("http://localhost:5000/saldos-clientes", { withCredentials: true })
+      .get(`${API_URL}/saldos-clientes`, { withCredentials: true })
       .then((res) => {
         const saldosObj = {};
         res.data.forEach((s) => {

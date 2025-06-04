@@ -7,11 +7,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 const useCheckSession = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/dashboard", {
+        const res = await axios.get(`${API_URL}/dashboard`, {
           withCredentials: true,
         });
 
@@ -23,12 +24,12 @@ const useCheckSession = () => {
         // Intentar refrescar token
         try {
           await axios.post(
-            "http://localhost:5000/refresh-token",
+            `${API_URL}/refresh-token`,
             {},
             { withCredentials: true }
           );
 
-          const retry = await axios.get("http://localhost:5000/dashboard", {
+          const retry = await axios.get(`${API_URL}/dashboard`, {
             withCredentials: true,
           });
 
