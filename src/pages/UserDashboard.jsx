@@ -3,8 +3,167 @@ import axios from "axios";
 import useAuth from "../components/useAuth";
 import useLogout from "../components/useLogout";
 import RendicionesUserTab from "../components/RencicionesReadTab";
-
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  PDFDownloadLink,
+  Image,
+} from "@react-pdf/renderer";
 const LOGO_URL = "/logo.png";
+
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: "column",
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    fontSize: 11,
+    fontFamily: "Helvetica",
+  },
+  headerBox: {
+    border: "2px solid black",
+    padding: 10,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: "#666",
+  },
+  mainSection: {
+    border: "1px solid black",
+    padding: 15,
+    marginBottom: 10,
+  },
+  responsableSection: {
+    border: "1px solid black",
+    padding: 15,
+    marginBottom: 10,
+  },
+  notariaSection: {
+    border: "1px solid black",
+    padding: 15,
+    marginBottom: 10,
+  },
+  adminSection: {
+    border: "1px solid black",
+    padding: 15,
+    marginBottom: 10,
+  },
+  field: {
+    marginBottom: 8,
+    fontSize: 11,
+  },
+  fieldLabel: {
+    fontWeight: "bold",
+  },
+  sectionTitle: {
+    fontWeight: "bold",
+    marginBottom: 10,
+    fontSize: 12,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  column: {
+    flex: 1,
+    marginRight: 10,
+  },
+  underline: {
+    borderBottom: "1px solid black",
+    minHeight: 15,
+    marginLeft: 5,
+    flex: 1,
+  },
+});
+
+const SolicitudFondoPDF = ({ data }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      {/* Header */}
+      <View style={styles.headerBox}>
+        <Text style={styles.title}>SOLICITUD DE FONDOS POR RENDIR</Text>
+        <Image src={LOGO_URL} style={{ marginTop: 5, alignSelf: "center" }} />
+      </View>
+
+      {/* Información principal */}
+      <View style={styles.mainSection}>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Fecha (*): </Text>
+          {data.fecha}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Cliente (*): </Text>
+          {data.cliente}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Solicitante de la empresa (*): </Text>
+          {data.solicitanteEmpresa}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Monto (*): </Text>
+          {data.monto}
+        </Text>
+      </View>
+
+      {/* Responsables */}
+      <View style={styles.responsableSection}>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Responsable Interno: </Text>
+          {data.responsableInterno}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Responsable Externo (*): </Text>
+          {data.responsableExterno}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Concepto (*): </Text>
+          {data.concepto}
+        </Text>
+      </View>
+
+      {/* Transferencia */}
+      <View style={styles.notariaSection}>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>
+            A nombre de quién se emite Transferencia (*):{" "}
+          </Text>
+          {data.emiteTransferencia}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>¿Tiene respaldo boleta? (*): </Text>
+          {data.tramiteRespaldo}
+        </Text>
+      </View>
+
+      {/* Información interna */}
+      <View style={styles.adminSection}>
+        <Text style={styles.sectionTitle}>Interno Administración</Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Nº Documento: </Text>
+          {data.nDocumento}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Cuenta Corriente: </Text>
+          {data.cuentaCorriente}
+        </Text>
+        <Text style={styles.field}>
+          <Text style={styles.fieldLabel}>Banco: </Text>
+          {data.banco}
+        </Text>
+      </View>
+    </Page>
+  </Document>
+);
 
 const UserDashboard = () => {
   const { user, loading } = useAuth("user");
@@ -14,6 +173,21 @@ const UserDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [saldos, setSaldos] = useState({});
   const API_URL = import.meta.env.VITE_API_URL;
+
+  const [formData, setFormData] = useState({
+    fecha: "",
+    cliente: "",
+    solicitanteEmpresa: "",
+    monto: "",
+    responsableInterno: "",
+    responsableExterno: "",
+    concepto: "",
+    emiteTransferencia: "",
+    tramiteRespaldo: "",
+    nDocumento: "",
+    cuentaCorriente: "",
+    banco: "",
+  });
 
   // PAGINACIÓN
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,8 +240,46 @@ const UserDashboard = () => {
     { key: "inicio", label: "Inicio" },
     { key: "clientes", label: "Lista de clientes" },
     { key: "rendiciones", label: "Rendiciones" },
+    { key: "solicitud-fondo", label: "Solicitud de Fondo" },
     { key: "contacto", label: "Contacto" },
   ];
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const requiredFields = [
+    "fecha",
+    "cliente",
+    "solicitanteEmpresa",
+    "monto",
+    "responsableExterno",
+    "concepto",
+    "emiteTransferencia",
+    "tramiteRespaldo",
+  ];
+
+  const isFormValid = requiredFields.every(
+    (field) => formData[field].trim() !== ""
+  );
+
+  const handleDownloadClick = () => {
+    // Limpiar formulario
+    setFormData({
+      fecha: "",
+      cliente: "",
+      solicitanteEmpresa: "",
+      monto: "",
+      responsableInterno: "",
+      responsableExterno: "",
+      concepto: "",
+      emiteTransferencia: "",
+      tramiteRespaldo: "",
+      nDocumento: "",
+      cuentaCorriente: "",
+      banco: "",
+    });
+  };
 
   // Filtrar clientes basado en el término de búsqueda
   const filteredClientes = clientes.filter((cliente) => {
@@ -287,6 +499,168 @@ Dinero: $${c.dinero}`;
         <div>
           <h2 className="text-xl font-bold mb-4">Mis Rendiciones</h2>
           <RendicionesUserTab clientes={clientes} />
+        </div>
+      )}
+
+      {tab === "solicitud-fondo" && (
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-xl font-bold mb-4">Solicitud de Fondo</h2>
+          <form>
+            {" "}
+            <div className="grid grid-cols-2 gap-4">
+              <label className="flex flex-col">
+                Fecha (*)
+                <input
+                  type="text"
+                  name="fecha"
+                  value={formData.fecha}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Cliente (*)
+                <input
+                  type="text"
+                  name="cliente"
+                  value={formData.cliente}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Solicitante de la empresa (*)
+                <input
+                  type="text"
+                  name="solicitanteEmpresa"
+                  value={formData.solicitanteEmpresa}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Monto (*)
+                <input
+                  type="text"
+                  name="monto"
+                  value={formData.monto}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Responsable Interno
+                <input
+                  type="text"
+                  name="responsableInterno"
+                  value={formData.responsableInterno}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Responsable Externo (*)
+                <input
+                  type="text"
+                  name="responsableExterno"
+                  value={formData.responsableExterno}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col col-span-2">
+                Concepto (*)
+                <textarea
+                  name="concepto"
+                  value={formData.concepto}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                  rows={3}
+                />
+              </label>
+              <label className="flex flex-col">
+                Indicar a nombre de quién se “emite” Transferencia (*)
+                <input
+                  type="text"
+                  name="emiteTransferencia"
+                  value={formData.emiteTransferencia}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Indicar si trámite tiene respaldo (boleta) (*)
+                <input
+                  type="text"
+                  name="tramiteRespaldo"
+                  value={formData.tramiteRespaldo}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+
+              <h3 className="font-semibold mt-6 mb-2 col-span-2">
+                Interno Administración
+              </h3>
+
+              <label className="flex flex-col">
+                Nº Documento
+                <input
+                  type="text"
+                  name="nDocumento"
+                  value={formData.nDocumento}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Cta. Cte.
+                <input
+                  type="text"
+                  name="cuentaCorriente"
+                  value={formData.cuentaCorriente}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+              <label className="flex flex-col">
+                Banco
+                <input
+                  type="text"
+                  name="banco"
+                  value={formData.banco}
+                  onChange={handleChange}
+                  className="border rounded p-2"
+                />
+              </label>
+            </div>
+            <div className="mt-6">
+              <button
+                disabled={!isFormValid}
+                className={`px-4 py-2 rounded text-white ${
+                  isFormValid
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              >
+                <PDFDownloadLink
+                  document={<SolicitudFondoPDF data={formData} />}
+                  fileName="solicitud_fondo.pdf"
+                  disabled={!isFormValid || loading}
+                  onClick={handleDownloadClick}
+                  className={`px-4 py-2 rounded ${
+                    !isFormValid || loading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
+                >
+                  {({ loading: pdfLoading }) =>
+                    pdfLoading ? "Descargar PDF" : "Descargar PDF"
+                  }
+                </PDFDownloadLink>
+              </button>
+            </div>
+          </form>
         </div>
       )}
       {tab === "contacto" && (
