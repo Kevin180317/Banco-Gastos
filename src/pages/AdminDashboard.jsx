@@ -166,7 +166,7 @@ const AdminDashboard = () => {
         );
       } else {
         // Crear nuevo cliente
-        await axios.post("${API_URL}/clientes", dataToSend, {
+        await axios.post(`${API_URL}/clientes`, dataToSend, {
           withCredentials: true,
         });
       }
