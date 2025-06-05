@@ -98,19 +98,19 @@ const SolicitudFondoPDF = ({ data }) => (
       {/* Información principal */}
       <View style={styles.mainSection}>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>Fecha (*): </Text>
+          <Text style={styles.fieldLabel}>Fecha : </Text>
           {data.fecha}
         </Text>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>Cliente (*): </Text>
+          <Text style={styles.fieldLabel}>Cliente : </Text>
           {data.cliente}
         </Text>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>Solicitante de la empresa (*): </Text>
+          <Text style={styles.fieldLabel}>Solicitante de la empresa : </Text>
           {data.solicitanteEmpresa}
         </Text>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>Monto (*): </Text>
+          <Text style={styles.fieldLabel}>Monto : </Text>
           {data.monto}
         </Text>
       </View>
@@ -122,11 +122,11 @@ const SolicitudFondoPDF = ({ data }) => (
           {data.responsableInterno}
         </Text>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>Responsable Externo (*): </Text>
+          <Text style={styles.fieldLabel}>Responsable Externo : </Text>
           {data.responsableExterno}
         </Text>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>Concepto (*): </Text>
+          <Text style={styles.fieldLabel}>Concepto : </Text>
           {data.concepto}
         </Text>
       </View>
@@ -135,12 +135,12 @@ const SolicitudFondoPDF = ({ data }) => (
       <View style={styles.notariaSection}>
         <Text style={styles.field}>
           <Text style={styles.fieldLabel}>
-            A nombre de quién se emite Transferencia (*):{" "}
+            A nombre de quién se emite Transferencia :{" "}
           </Text>
           {data.emiteTransferencia}
         </Text>
         <Text style={styles.field}>
-          <Text style={styles.fieldLabel}>¿Tiene respaldo boleta? (*): </Text>
+          <Text style={styles.fieldLabel}>¿Tiene respaldo boleta? : </Text>
           {data.tramiteRespaldo}
         </Text>
       </View>
@@ -509,7 +509,7 @@ Dinero: $${c.dinero}`;
             {" "}
             <div className="grid grid-cols-2 gap-4">
               <label className="flex flex-col">
-                Fecha (*)
+                (•) Fecha
                 <input
                   type="text"
                   name="fecha"
@@ -519,7 +519,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Cliente (*)
+                (•) Cliente
                 <input
                   type="text"
                   name="cliente"
@@ -529,7 +529,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Solicitante de la empresa (*)
+                (•) Solicitante de la empresa
                 <input
                   type="text"
                   name="solicitanteEmpresa"
@@ -539,7 +539,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Monto (*)
+                (•) Monto
                 <input
                   type="text"
                   name="monto"
@@ -549,7 +549,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Responsable Interno
+                (•) Responsable Interno
                 <input
                   type="text"
                   name="responsableInterno"
@@ -559,7 +559,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Responsable Externo (*)
+                (•) Responsable Externo
                 <input
                   type="text"
                   name="responsableExterno"
@@ -569,7 +569,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col col-span-2">
-                Concepto (*)
+                (•) Concepto
                 <textarea
                   name="concepto"
                   value={formData.concepto}
@@ -579,7 +579,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Indicar a nombre de quién se “emite” Transferencia (*)
+                (•) Indicar a nombre de quién se “emite” Transferencia
                 <input
                   type="text"
                   name="emiteTransferencia"
@@ -589,7 +589,7 @@ Dinero: $${c.dinero}`;
                 />
               </label>
               <label className="flex flex-col">
-                Indicar si trámite tiene respaldo (boleta) (*)
+                (•) Indicar si trámite tiene respaldo (boleta)
                 <input
                   type="text"
                   name="tramiteRespaldo"
