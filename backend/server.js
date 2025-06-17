@@ -19,34 +19,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Usuarios predefinidos (nombre de usuario, contraseña en texto plano, rol)
-const users = [
-  {
-    username: "Francisco Montero",
-    email: "Francisco.montero@ocl.cl",
-    password: "Francisco5420@",
-    role: "admin",
-  },
-  {
-    username: "Isabel Quiroz",
-    email: "Isabel.quiroz@ocl.cl",
-    password: "Isabelquiroz5420@",
-    role: "admin",
-  },
-  {
-    username: "Claudia Soto",
-    email: "Claudia.soto@ocl.cl",
-    password: "Claudia123",
-    role: "user",
-  },
-  {
-    username: "Valentina Robles",
-    email: "Valentina.robles@ocl.cl",
-    password: "Valentina123",
-    role: "user",
-  },
-];
-
 const connnection = mysql2.createConnection({
   host: "localhost",
   user: "root",
@@ -141,51 +113,54 @@ app.put("/clientes/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
-  // Buscar el usuario en el arreglo
-  const user = users.find(
-    (u) => u.username === username || u.email === username
-  );
-  if (!user) return res.status(400).json({ message: "Usuario no encontrado" });
+  // Buscar el usuario en la base de datos (por username o email)
+  const sql = "SELECT * FROM users WHERE username = ? OR email = ?";
+  connnection.query(sql, [username, username], (err, results) => {
+    if (err) return res.status(500).json({ message: "Error en el servidor" });
+    if (results.length === 0)
+      return res.status(400).json({ message: "Usuario no encontrado" });
 
-  // Verificar la contraseña
-  if (user.password !== password) {
-    return res.status(400).json({ message: "Contraseña incorrecta" });
-  }
+    const user = results[0];
+    // Verificar la contraseña (en producción usa bcrypt)
+    if (user.password !== password) {
+      return res.status(400).json({ message: "Contraseña incorrecta" });
+    }
 
-  // Crear el JWT (Access Token)
-  const accessToken = jwt.sign(
-    { username: user.username, role: user.role },
-    "mi_secreto", // Aquí está el secreto fijo
-    { expiresIn: "1h" } // El access token caduca en 1 hora
-  );
+    // Crear el JWT (Access Token)
+    const accessToken = jwt.sign(
+      { username: user.username, role: user.role },
+      "mi_secreto",
+      { expiresIn: "1h" }
+    );
 
-  // Crear el Refresh Token
-  const refreshToken = jwt.sign(
-    { username: user.username, role: user.role },
-    "mi_secreto_refresh", // Un secreto diferente para el refresh token
-    { expiresIn: "7d" } // El refresh token caduca en 7 días
-  );
+    // Crear el Refresh Token
+    const refreshToken = jwt.sign(
+      { username: user.username, role: user.role },
+      "mi_secreto_refresh",
+      { expiresIn: "7d" }
+    );
 
-  // Guardar el refresh token en las cookies
-  res.cookie("refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: false, // Esto debería ser true en producción si usas HTTPS
-    maxAge: 604800000, // 7 días
+    // Guardar los tokens en cookies
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 604800000,
+    });
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 3600000,
+    });
+
+    // Redirigir según el rol
+    if (user.role === "admin") {
+      res.json({ message: "Bienvenido, administrador!", role: "admin" });
+    } else if (user.role === "abogado") {
+      res.json({ message: "Bienvenido, abogado!", role: "abogado" });
+    } else {
+      res.json({ message: "Bienvenido, usuario!", role: "user" });
+    }
   });
-
-  // Guardar el access token en las cookies
-  res.cookie("token", accessToken, {
-    httpOnly: true,
-    secure: false, // Esto debería ser true en producción si usas HTTPS
-    maxAge: 3600000, // 1 hora
-  });
-
-  // Redirigir al usuario según el rol
-  if (user.role === "admin") {
-    res.json({ message: "Bienvenido, administrador!", role: "admin" });
-  } else {
-    res.json({ message: "Bienvenido, usuario!", role: "user" });
-  }
 });
 
 // Ruta protegida (requiere autenticación)

@@ -195,8 +195,15 @@ const AdminDashboard = () => {
     { key: "clientes", label: "Lista de clientes" },
     { key: "editarCliente", label: "Cliente" },
     { key: "rendiciones", label: "Rendiciones" },
+    { key: "crear usuario", label: "Crear Usuario" },
     { key: "contacto", label: "Contacto" },
   ];
+
+  const filteredTabs = tabs.filter(
+    (item) =>
+      item.key !== "crear usuario" ||
+      (user.role === "admin" && user.username === "Francisco Montero")
+  );
 
   // Calcular clientes a mostrar en la página actual (usando clientes filtrados)
   const totalPages = Math.ceil(filteredClientes.length / itemsPerPage);
@@ -213,7 +220,7 @@ const AdminDashboard = () => {
 
       {/* Navegación por pestañas */}
       <div className="flex justify-center gap-2 mb-8 flex-wrap">
-        {tabs.map((item) => (
+        {filteredTabs.map((item) => (
           <button
             key={item.key}
             onClick={() => {
@@ -540,6 +547,14 @@ Dinero: $${c.dinero}`;
       )}
 
       {tab === "rendiciones" && <RendicionesTab clientes={clientes} />}
+
+      {user.username === "Francisco Montero" && tab === "crear usuario" && (
+        <div className="bg-gray-100 p-4 rounded shadow max-w-md mx-auto">
+          <h2 className="text-xl font-bold mb-4">
+            Crear Usuario {user.username}
+          </h2>
+        </div>
+      )}
 
       {tab === "contacto" && (
         <div className="flex flex-col items-center gap-4">
