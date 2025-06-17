@@ -126,16 +126,28 @@ app.post("/login", (req, res) => {
       return res.status(400).json({ message: "Contraseña incorrecta" });
     }
 
+    // Si el usuario debe cambiar su contraseña
+    if (user.password_change === 0 || user.password_change === false) {
+      // No crear token, solo avisar al frontend
+      return res.json({
+        requirePasswordChange: true,
+        userId: user.id,
+        role: user.role,
+        username: user.username,
+        email: user.email,
+      });
+    }
+
     // Crear el JWT (Access Token)
     const accessToken = jwt.sign(
-      { username: user.username, role: user.role },
+      { username: user.username, role: user.role, email: user.email },
       "mi_secreto",
       { expiresIn: "1h" }
     );
 
     // Crear el Refresh Token
     const refreshToken = jwt.sign(
-      { username: user.username, role: user.role },
+      { username: user.username, role: user.role, email: user.email },
       "mi_secreto_refresh",
       { expiresIn: "7d" }
     );
@@ -342,6 +354,45 @@ app.get("/saldos-clientes", (req, res) => {
         .json({ error: "Error al obtener los saldos de clientes" });
     }
     res.json(results);
+  });
+});
+
+app.post("/users", (req, res) => {
+  const { username, email, role } = req.body;
+  // Solo permite crear abogados
+  if (role !== "abogado")
+    return res.status(400).json({ error: "Solo se pueden crear abogados" });
+  // Generar contraseña temporal
+  const tempPassword = Math.random().toString(36).slice(-8);
+  const sql =
+    "INSERT INTO users (username, email, password, role, password_change) VALUES (?, ?, ?, ?, false)";
+  connnection.query(
+    sql,
+    [username, email, tempPassword, role],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: "Error al crear usuario" });
+      res.status(201).json({
+        user: { id: result.insertId, username, email, role },
+        tempPassword,
+      });
+    }
+  );
+});
+
+app.put("/users/:id/password", (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
+  // En producción, usa bcrypt para hashear la contraseña
+  const sql =
+    "UPDATE users SET password = ?, password_change = true WHERE id = ?";
+  connnection.query(sql, [newPassword, id], (err, result) => {
+    if (err)
+      return res
+        .status(500)
+        .json({ message: "Error al actualizar contraseña" });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    res.json({ message: "Contraseña actualizada correctamente" });
   });
 });
 

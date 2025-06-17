@@ -3,6 +3,7 @@ import axios from "axios";
 import useAuth from "../components/useAuth";
 import useLogout from "../components/useLogout";
 import RendicionesTab from "../components/RendicionesTab";
+import CrearUsuarioForm from "../components/CrearUsuarioForm";
 const LOGO_URL = "/logo.png";
 
 const AdminDashboard = () => {
@@ -547,12 +548,10 @@ Dinero: $${c.dinero}`;
       )}
 
       {tab === "rendiciones" && <RendicionesTab clientes={clientes} />}
-
       {user.username === "Francisco Montero" && tab === "crear usuario" && (
         <div className="bg-gray-100 p-4 rounded shadow max-w-md mx-auto">
-          <h2 className="text-xl font-bold mb-4">
-            Crear Usuario {user.username}
-          </h2>
+          <h2 className="text-xl font-bold mb-4">Crear Usuario</h2>
+          <CrearUsuarioForm />
         </div>
       )}
 
