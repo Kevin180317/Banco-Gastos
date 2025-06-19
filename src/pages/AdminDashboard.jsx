@@ -549,7 +549,7 @@ Dinero: $${c.dinero}`;
 
       {tab === "rendiciones" && <RendicionesTab clientes={clientes} />}
       {user.username === "Francisco Montero" && tab === "crear usuario" && (
-        <div className="bg-gray-100 p-4 rounded shadow max-w-md mx-auto">
+        <div>
           <h2 className="text-xl font-bold mb-4">Crear Usuario</h2>
           <CrearUsuarioForm />
         </div>

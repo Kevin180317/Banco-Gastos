@@ -357,6 +357,17 @@ app.get("/saldos-clientes", (req, res) => {
   });
 });
 
+app.get("/users", (req, res) => {
+  connnection.query(
+    "SELECT id, username, email, role, password FROM users",
+    (err, results) => {
+      if (err)
+        return res.status(500).json({ error: "Error al obtener usuarios" });
+      res.json(results);
+    }
+  );
+});
+
 app.post("/users", (req, res) => {
   const { username, email, role } = req.body;
   // Solo permite crear abogados
@@ -393,6 +404,17 @@ app.put("/users/:id/password", (req, res) => {
     if (result.affectedRows === 0)
       return res.status(404).json({ message: "Usuario no encontrado" });
     res.json({ message: "Contraseña actualizada correctamente" });
+  });
+});
+
+app.delete("/users/:id", (req, res) => {
+  const { id } = req.params;
+  connnection.query("DELETE FROM users WHERE id = ?", [id], (err, result) => {
+    if (err)
+      return res.status(500).json({ error: "Error al eliminar usuario" });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    res.json({ message: "Usuario eliminado correctamente" });
   });
 });
 
