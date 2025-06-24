@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const ViaticosTab = ({ user, clientes }) => {
+const ViaticosTab = ({ user }) => {
   const [fechaSolicitud, setFechaSolicitud] = useState("");
   const [socioAutoriza, setSocioAutoriza] = useState("");
   const [fechaReembolso, setFechaReembolso] = useState("");
@@ -224,22 +224,17 @@ const ViaticosTab = ({ user, clientes }) => {
             >
               Cliente
             </label>
-            <select
+            <input
+              type="text"
               id={`cliente-${index}`}
               value={gasto.cliente}
               onChange={(e) =>
                 actualizarGasto(index, "cliente", e.target.value)
               }
               className="border p-2 rounded w-full"
+              placeholder="Ingrese cliente"
               required
-            >
-              <option value="">Seleccione Cliente</option>
-              {clientes.map((cli) => (
-                <option key={cli.id} value={cli.nombre}>
-                  {cli.nombre}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div>

@@ -37,7 +37,6 @@ const NotificacionesRendiciones = () => {
   };
 
   const handleRechazar = async (id, tipo) => {
-    if (!motivo) return alert("Debes ingresar un motivo de rechazo.");
     const endpoint = tipo === "viatico" ? "viaticos" : "rendiciones";
     await axios.put(`${API_URL}/${endpoint}/${id}/rechazar`, { motivo });
     if (tipo === "viatico") {
@@ -258,13 +257,7 @@ const NotificacionesRendiciones = () => {
               >
                 Aprobar
               </button>
-              <input
-                type="text"
-                placeholder="Motivo de rechazo"
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                className="border p-1 rounded flex-1"
-              />
+
               <button
                 className="bg-red-600 text-white px-4 py-1 rounded"
                 onClick={() => handleRechazar(detalle.id, detalle.tipo)}
