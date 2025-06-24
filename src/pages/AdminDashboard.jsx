@@ -4,6 +4,8 @@ import useAuth from "../components/useAuth";
 import useLogout from "../components/useLogout";
 import RendicionesTab from "../components/RendicionesTab";
 import CrearUsuarioForm from "../components/CrearUsuarioForm";
+import NotificacionesRendiciones from "../components/NotificacionesRendiciones";
+import ViaticosTab from "../components/ViaticoTab";
 const LOGO_URL = "/logo.png";
 
 const AdminDashboard = () => {
@@ -12,7 +14,9 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState("inicio");
   const [saldos, setSaldos] = useState({});
   const API_URL = import.meta.env.VITE_API_URL;
-
+  const [viaticos, setViaticos] = useState([]);
+  const [viaticosLoading, setViaticosLoading] = useState(false);
+  const [estadoFiltro, setEstadoFiltro] = useState("pendiente");
   const [clientes, setClientes] = useState([]);
   // PAGINACIÓN
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,10 +76,33 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchViaticos = async () => {
+    setViaticosLoading(true);
+    try {
+      const res = await axios.get(
+        `${API_URL}/admin/viaticos?estado=${estadoFiltro}`,
+        {
+          withCredentials: true,
+        }
+      );
+      setViaticos(res.data);
+    } catch (error) {
+      console.error("Error al obtener viáticos", error);
+    } finally {
+      setViaticosLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchClientes();
     fetchSaldos();
   }, []);
+
+  useEffect(() => {
+    if (user?.username === "Francisco Montero") {
+      fetchViaticos();
+    }
+  }, [estadoFiltro]);
 
   // Filtrar clientes basado en el término de búsqueda
   const filteredClientes = clientes.filter((cliente) => {
@@ -195,16 +222,24 @@ const AdminDashboard = () => {
     { key: "inicio", label: "Inicio" },
     { key: "clientes", label: "Lista de clientes" },
     { key: "editarCliente", label: "Cliente" },
+    { key: "viaticos", label: "Viáticos" },
     { key: "rendiciones", label: "Rendiciones" },
     { key: "crear usuario", label: "Crear Usuario" },
     { key: "contacto", label: "Contacto" },
   ];
 
-  const filteredTabs = tabs.filter(
-    (item) =>
-      item.key !== "crear usuario" ||
-      (user.role === "admin" && user.username === "Francisco Montero")
-  );
+  const filteredTabs = tabs.filter((item) => {
+    if (
+      item.key === "crear usuario" &&
+      !(user.role === "admin" && user.username === "Francisco Montero")
+    ) {
+      return false;
+    }
+    if (item.key === "viaticos" && user.username !== "Francisco Montero") {
+      return false;
+    }
+    return true;
+  });
 
   // Calcular clientes a mostrar en la página actual (usando clientes filtrados)
   const totalPages = Math.ceil(filteredClientes.length / itemsPerPage);
@@ -213,12 +248,21 @@ const AdminDashboard = () => {
     currentPage * itemsPerPage
   );
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Intl.DateTimeFormat("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(dateString));
+  };
+
   return (
     <div className="max-w-7xl mx-auto mt-10 p-4">
       <h1 className="text-2xl font-bold text-center mb-6">
         Panel de Administración - {user.username}
       </h1>
-
+      <NotificacionesRendiciones />
       {/* Navegación por pestañas */}
       <div className="flex justify-center gap-2 mb-8 flex-wrap">
         {filteredTabs.map((item) => (
@@ -552,6 +596,101 @@ Dinero: $${c.dinero}`;
         <div>
           <h2 className="text-xl font-bold mb-4">Crear Usuario</h2>
           <CrearUsuarioForm />
+        </div>
+      )}
+
+      {user.username === "Francisco Montero" && tab === "viaticos" && (
+        <div>
+          <h2 className="text-xl font-bold mb-4">Viáticos</h2>
+          <div className="flex gap-2 mb-4">
+            {["pendiente", "aprobada", "rechazada"].map((estado) => (
+              <button
+                key={estado}
+                onClick={() => setEstadoFiltro(estado)}
+                className={`px-4 py-2 rounded ${
+                  estadoFiltro === estado
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {estado.charAt(0).toUpperCase() + estado.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {viaticosLoading ? (
+            <p>Cargando viáticos...</p>
+          ) : viaticos.length === 0 ? (
+            <p>No hay viáticos con estado: {estadoFiltro}</p>
+          ) : (
+            <div className="space-y-4">
+              {viaticos.map((v) => (
+                <div
+                  key={v.id}
+                  className="border rounded-lg p-4 shadow bg-white text-sm"
+                >
+                  <div className="mb-2">
+                    <strong>Abogado:</strong> {v.abogado_username} |
+                    <strong> Socio:</strong> {v.socio_autoriza}
+                  </div>
+                  <div className="mb-2">
+                    <strong>Fecha Solicitud:</strong>{" "}
+                    {formatDate(v.fecha_solicitud)} |<strong> Estado:</strong>{" "}
+                    <span
+                      className={
+                        v.estado === "aprobada"
+                          ? "text-green-600"
+                          : v.estado === "rechazada"
+                          ? "text-red-600"
+                          : "text-yellow-600"
+                      }
+                    >
+                      {v.estado}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <strong>Total Reembolso:</strong> ${v.total_reembolso}
+                  </div>
+                  {v.motivo_rechazo && (
+                    <div className="mb-2 text-red-700">
+                      <strong>Motivo Rechazo:</strong> {v.motivo_rechazo}
+                    </div>
+                  )}
+                  <div>
+                    <strong>Gastos:</strong>
+                    <ul className="mt-2 space-y-2">
+                      {v.gastos.map((g, index) => (
+                        <li
+                          key={index}
+                          className="border border-gray-200 rounded p-2 bg-gray-50"
+                        >
+                          <p>
+                            <strong>Fecha del Gasto:</strong>{" "}
+                            {formatDate(g.fechaGasto)}
+                          </p>
+                          <p>
+                            <strong>Trámite:</strong> {g.tramite}
+                          </p>
+                          <p>
+                            <strong>N° de Boleta:</strong> {g.numeroBoleta}
+                          </p>
+                          <p>
+                            <strong>Monto:</strong> ${g.monto}
+                          </p>
+                          <p>
+                            <strong>Cliente:</strong> {g.cliente}
+                          </p>
+                          <p>
+                            <strong>Cargo:</strong> {g.cargo}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

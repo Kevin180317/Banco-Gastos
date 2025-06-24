@@ -18,7 +18,13 @@ const useCheckSession = () => {
 
         const role = res.data.user.role;
         if (location.pathname === "/") {
-          role === "admin" ? navigate("/admin") : navigate("/user");
+          if (role === "admin") {
+            navigate("/admin");
+          } else if (role === "abogado") {
+            navigate("/abogados");
+          } else if (role === "user") {
+            navigate("/user");
+          }
         }
       } catch (err) {
         // Intentar refrescar token
